@@ -12,9 +12,9 @@ uygulamasına ihtiyaç duymadan:
   birleşimi tünel dışına alınır (CDN'ler resolver'a göre farklı IP döndüğü için). Çözülen IP'ler
   önbelleğe birikir; yavaş/başarısız sorguda önbellek kullanılır. `ornek.com` girilince
   `www.ornek.com` da çözülür. Android 13+ (`VpnService.Builder.excludeRoute`).
-- **Private DNS bypass**: VPN açıkken "Private DNS sunucusuna erişilemiyor" hatası için. Private
-  DNS hostname'i (otomatik algılanır ya da elle girilir) çözülür, IP'leri tünel dışına alınır;
-  DNS sorguları DoT ile şifreli kalır, sadece VPN'den geçmez.
+- **Private DNS bypass** (varsayılan kapalı, son çare): VPN açıkken "Private DNS sunucusuna
+  erişilemiyor" hatasının kök nedeni çözülemezse. Private DNS hostname'i çözülür, IP'leri tünel
+  dışına alınır; sorgular DoT ile şifreli kalır ama VPN IP'si yerine gerçek IP'den gider.
 - **DPI koruması**: tünel editörü → menü → *DPI koruması*. Jc/Jmin/Jmax junk paketlerini ekler.
   Bunlar el sıkışmadan önce gönderilir ve düz WireGuard sunucularınca yok sayılır, Proton'la
   uyumludur. S1/S2 ve H1-H4 sunucu desteği ister, Proton'da **dokunma**.

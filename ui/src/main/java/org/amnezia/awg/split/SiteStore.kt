@@ -51,7 +51,7 @@ object SiteStore {
         enabled = this[ENABLED] ?: true,
         sites = (this[SITES] ?: emptySet()).sorted(),
         dohUrl = this[DOH_URL]?.takeIf { it.isNotBlank() } ?: DEFAULT_DOH_URL,
-        privateDnsBypass = this[PRIVATE_DNS_BYPASS] ?: true,
+        privateDnsBypass = this[PRIVATE_DNS_BYPASS] ?: false,
         privateDnsHost = this[PRIVATE_DNS_HOST] ?: "",
         lastDetectedPrivateDns = this[LAST_DETECTED_PRIVATE_DNS] ?: "",
         cache = decodeCache(this[CACHE]),

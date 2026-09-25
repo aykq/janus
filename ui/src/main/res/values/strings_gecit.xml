@@ -22,7 +22,7 @@
     <string name="sites_doh_hint">Siteleri çözmek için DoH adresi</string>
     <string name="sites_doh_invalid">DoH adresi https:// ile başlamalı</string>
     <string name="sites_private_dns_bypass">Private DNS\'i tünel dışında tut</string>
-    <string name="sites_private_dns_description">VPN açıkken \"Private DNS sunucusuna erişilemiyor\" hatasını önler: Private DNS sunucusunun IP\'leri tünel dışına alınır, DNS sorguları yine şifreli (DoT) gider.</string>
+    <string name="sites_private_dns_description">Kapalıyken DNS sorguları da VPN\'den geçer (önerilen). Yalnız VPN açıkken \"Private DNS sunucusuna erişilemiyor\" hatası başka türlü çözülmezse aç: Private DNS sunucusunun IP\'leri tünel dışına alınır, sorgular şifreli (DoT) kalır ama gerçek IP\'nden gider.</string>
     <string name="sites_private_dns_host_hint">Private DNS hostname (boşsa otomatik)</string>
     <string name="sites_private_dns_detected">Algılanan Private DNS: %s</string>
     <string name="sites_private_dns_not_detected">Private DNS algılanmadı (ilk bağlantıda kontrol edilir)</string>
