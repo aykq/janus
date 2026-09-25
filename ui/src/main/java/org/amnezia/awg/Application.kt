@@ -27,6 +27,7 @@ import org.amnezia.awg.util.NetworkType
 import org.amnezia.awg.util.RootShell
 import org.amnezia.awg.util.ToolsInstaller
 import org.amnezia.awg.util.UserKnobs
+import org.amnezia.awg.split.SiteRouteProvider
 import org.amnezia.awg.util.applicationScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +82,7 @@ class Application : android.app.Application() {
         if (backend == null) {
             backend = GoBackend(applicationContext)
             GoBackend.setAlwaysOnCallback { get().applicationScope.launch { get().tunnelManager.restoreState(true) } }
+            GoBackend.setExcludedRoutesProvider(SiteRouteProvider(applicationContext))
         }
         return backend
     }

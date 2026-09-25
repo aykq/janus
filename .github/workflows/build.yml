@@ -1,7 +1,9 @@
 name: Android build (signed AAB / debug APK)
-run-name: "Android • ${{ inputs.target }} • ${{ inputs.ref || github.ref_name }}"
+run-name: "Android • ${{ inputs.target || 'debug_apk' }} • ${{ inputs.ref || github.ref_name }}"
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
       target:
@@ -19,7 +21,7 @@ on:
 
 jobs:
   build:
-    name: "Build (${{ inputs.target }})"
+    name: "Build (${{ inputs.target || 'debug_apk' }})"
     runs-on: ubuntu-latest
 
     steps:
@@ -51,7 +53,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        case "${{ inputs.target }}" in
+        case "${{ inputs.target || 'debug_apk' }}" in
           release_aab)
             echo "gradle_task=bundleRelease" >> "$GITHUB_OUTPUT"
             echo "kind=aab" >> "$GITHUB_OUTPUT"
@@ -65,7 +67,7 @@ jobs:
             echo "needs_signing=false" >> "$GITHUB_OUTPUT"
             ;;
           *)
-            echo "Unknown target: ${{ inputs.target }}" >&2
+            echo "Unknown target: ${{ inputs.target || 'debug_apk' }}" >&2
             exit 1
             ;;
         esac

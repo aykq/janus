@@ -113,6 +113,17 @@ class TunnelEditorFragment : BaseFragment(), MenuProvider {
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        if (menuItem.itemId == R.id.menu_action_dpi_preset) {
+            val iface = binding?.config?.`interface` ?: return false
+            // Junk packets are sent before the handshake and ignored by vanilla WireGuard servers
+            // (e.g. Proton), so this is safe without server support. S1/S2 and H1-H4 need a
+            // matching AmneziaWG server and are left untouched.
+            iface.junkPacketCount = "4"
+            iface.junkPacketMinSize = "40"
+            iface.junkPacketMaxSize = "70"
+            Snackbar.make(binding!!.mainContainer, R.string.dpi_preset_applied, Snackbar.LENGTH_LONG).show()
+            return true
+        }
         if (menuItem.itemId == R.id.menu_action_save) {
             binding ?: return false
             val newConfig = try {

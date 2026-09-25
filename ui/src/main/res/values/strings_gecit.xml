@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sites_title">Site bazlı split tunnel</string>
+    <string name="sites_menu">Siteler</string>
+    <string name="sites_enabled">Bu siteler VPN dışında kalsın</string>
+    <string name="sites_description">Site adı veya IP/CIDR yaz. IP adreslerini Geçit bağlanırken kendisi bulur (DoH + sistem DNS). Değişiklikler tünel yeniden bağlanınca geçerli olur.</string>
+    <string name="sites_api_warning">Bu özellik Android 13 ve üstünü gerektirir. Bu cihazda site listesi uygulanmaz.</string>
+    <string name="sites_input_hint">ornek.com veya 1.2.3.0/24</string>
+    <string name="sites_add">Ekle</string>
+    <string name="sites_empty">Henüz site yok.</string>
+    <string name="sites_invalid">Geçersiz site veya IP: %s</string>
+    <string name="sites_added">Eklendi: %s</string>
+    <string name="sites_delete">Sil</string>
+    <string name="sites_remove_confirm">%s listeden çıkarılsın mı?</string>
+    <string name="sites_entry_network">IP / ağ</string>
+    <string name="sites_entry_unresolved">Henüz çözülmedi, ilk bağlantıda çözülecek</string>
+    <plurals name="sites_entry_ips">
+        <item quantity="one">%d IP biliniyor</item>
+        <item quantity="other">%d IP biliniyor</item>
+    </plurals>
+    <string name="sites_dns_header">DNS</string>
+    <string name="sites_doh_hint">Siteleri çözmek için DoH adresi</string>
+    <string name="sites_doh_invalid">DoH adresi https:// ile başlamalı</string>
+    <string name="sites_private_dns_bypass">Private DNS\'i tünel dışında tut</string>
+    <string name="sites_private_dns_description">VPN açıkken \"Private DNS sunucusuna erişilemiyor\" hatasını önler: Private DNS sunucusunun IP\'leri tünel dışına alınır, DNS sorguları yine şifreli (DoT) gider.</string>
+    <string name="sites_private_dns_host_hint">Private DNS hostname (boşsa otomatik)</string>
+    <string name="sites_private_dns_detected">Algılanan Private DNS: %s</string>
+    <string name="sites_private_dns_not_detected">Private DNS algılanmadı (ilk bağlantıda kontrol edilir)</string>
+    <string name="sites_apply">Kaydet ve tüneli yeniden bağla</string>
+    <string name="sites_saved">Kaydedildi</string>
+    <string name="sites_applied">Kaydedildi, tünel yeniden bağlandı</string>
+    <string name="dpi_preset">DPI koruması (junk paketleri)</string>
+    <string name="dpi_preset_applied">Junk paketleri eklendi (Jc 4, Jmin 40, Jmax 70). Kaydetmeyi unutma.</string>
+</resources>

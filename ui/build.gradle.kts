@@ -19,10 +19,10 @@ android {
     }
     namespace = pkg
     defaultConfig {
-        applicationId = pkg
+        applicationId = providers.gradleProperty("gecitApplicationId").get()
         targetSdk = 36
-        versionCode = providers.gradleProperty("amneziawgVersionCode").get().toInt()
-        versionName = providers.gradleProperty("amneziawgVersionName").get()
+        versionCode = providers.gradleProperty("gecitVersionCode").get().toInt()
+        versionName = providers.gradleProperty("gecitVersionName").get()
         buildConfigField("int", "MIN_SDK_VERSION", minSdk.toString())
     }
     compileOptions {

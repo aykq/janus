@@ -84,6 +84,13 @@
             android:parentActivityName=".activity.MainActivity" />
 
         <activity
+            android:name=".activity.SitesActivity"
+            android:label="@string/sites_title"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".activity.MainActivity" />
+
+        <activity
             android:name=".activity.TunnelCreatorActivity"
             android:label="@string/create_activity_title"
             android:parentActivityName=".activity.MainActivity" />
