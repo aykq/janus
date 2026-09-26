@@ -11,22 +11,27 @@ import android.content.Intent
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,11 +46,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -152,6 +160,7 @@ fun HomeScreen(
     onSettings: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    var languageOpen by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -164,6 +173,7 @@ fun HomeScreen(
                         if (state.selected != null)
                             DropdownMenuItem(text = { Text(stringResource(R.string.home_edit_tunnel)) }, onClick = { menuOpen = false; onOpenDpi() })
                         DropdownMenuItem(text = { Text(stringResource(R.string.home_log)) }, onClick = { menuOpen = false; onLog() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.home_language)) }, onClick = { menuOpen = false; languageOpen = true })
                         DropdownMenuItem(text = { Text(stringResource(R.string.home_settings)) }, onClick = { menuOpen = false; onSettings() })
                     }
                 },
@@ -200,6 +210,7 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
         }
     }
+    if (languageOpen) LanguageDialog(onDismiss = { languageOpen = false })
 }
 
 @Composable
@@ -330,4 +341,36 @@ private fun DpiCard(junkCount: Int?, onClick: () -> Unit) {
             trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
         )
     }
+}
+
+@Composable
+private fun LanguageDialog(onDismiss: () -> Unit) {
+    val current = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore('-')
+    val options = listOf("" to R.string.language_system, "en" to R.string.language_english, "tr" to R.string.language_turkish)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.home_language)) },
+        text = {
+            Column {
+                for ((tag, label) in options) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onDismiss()
+                                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                            }
+                            .padding(vertical = 8.dp),
+                    ) {
+                        RadioButton(selected = current == tag, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Text(stringResource(label))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } },
+    )
 }
