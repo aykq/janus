@@ -19,10 +19,10 @@ android {
     }
     namespace = pkg
     defaultConfig {
-        applicationId = providers.gradleProperty("makasApplicationId").get()
+        applicationId = providers.gradleProperty("switchyardApplicationId").get()
         targetSdk = 36
-        versionCode = providers.gradleProperty("makasVersionCode").get().toInt()
-        versionName = providers.gradleProperty("makasVersionName").get()
+        versionCode = providers.gradleProperty("switchyardVersionCode").get().toInt()
+        versionName = providers.gradleProperty("switchyardVersionName").get()
         buildConfigField("int", "MIN_SDK_VERSION", minSdk.toString())
     }
     compileOptions {

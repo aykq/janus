@@ -108,7 +108,7 @@ class SiteRouteProvider(private val context: Context) : GoBackend.ExcludedRoutes
     }
 
     companion object {
-        private const val TAG = "Makas/SiteRoutes"
+        private const val TAG = "Switchyard/SiteRoutes"
         private const val LOOKUP_BUDGET_MS = 5000L
     }
 }
