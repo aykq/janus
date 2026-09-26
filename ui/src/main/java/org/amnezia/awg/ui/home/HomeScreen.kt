@@ -134,7 +134,7 @@ fun HomeRoute(viewModel: HomeViewModel = viewModel()) {
 }
 
 internal fun openSplit(context: Context) {
-    context.startActivity(Intent(context, SettingsActivity::class.java))
+    context.startActivity(Intent(context, org.amnezia.awg.ui.split.SplitTunnelActivity::class.java))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

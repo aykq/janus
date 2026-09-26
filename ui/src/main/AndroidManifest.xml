@@ -94,11 +94,10 @@
             android:parentActivityName=".activity.MainActivity" />
 
         <activity
-            android:name=".activity.SitesActivity"
-            android:label="@string/sites_title"
+            android:name=".ui.split.SplitTunnelActivity"
+            android:label="@string/split_title"
             android:theme="@style/AppTheme.NoActionBar"
-            android:windowSoftInputMode="adjustResize"
-            android:parentActivityName=".activity.MainActivity" />
+            android:parentActivityName=".ui.home.HomeActivity" />
 
         <activity
             android:name=".activity.TunnelCreatorActivity"

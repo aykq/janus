@@ -803,7 +803,7 @@
                             android:nextFocusDown="@id/peers_layout"
                             android:nextFocusForward="@id/peers_layout"
                             android:onClick="@{fragment::onRequestSetExcludedIncludedApplications}"
-                            android:text="@{config.interface.includedApplications.size > 0 ? @plurals/set_included_applications(config.interface.includedApplications.size, config.interface.includedApplications.size) : config.interface.excludedApplications.size > 0 ? @plurals/set_excluded_applications(config.interface.excludedApplications.size, config.interface.excludedApplications.size) : @string/all_applications}"
+                            android:text="@string/split_open_settings"
                             android:textColor="?attr/colorSecondary"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"

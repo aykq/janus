@@ -5,6 +5,7 @@
 package org.amnezia.awg.fragment
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -30,6 +31,7 @@ import org.amnezia.awg.databinding.TunnelEditorFragmentBinding
 import org.amnezia.awg.model.ObservableTunnel
 import org.amnezia.awg.util.AdminKnobs
 import org.amnezia.awg.util.BiometricAuthenticator
+import org.amnezia.awg.ui.split.SplitTunnelActivity
 import org.amnezia.awg.util.ErrorMessages
 import org.amnezia.awg.viewmodel.ConfigProxy
 import org.amnezia.awg.config.Config
@@ -177,35 +179,7 @@ class TunnelEditorFragment : BaseFragment(), MenuProvider {
 
     @Suppress("UNUSED_PARAMETER")
     fun onRequestSetExcludedIncludedApplications(view: View?) {
-        if (binding != null) {
-            var isExcluded = true
-            var selectedApps = ArrayList(binding!!.config!!.`interface`.excludedApplications)
-            if (selectedApps.isEmpty()) {
-                selectedApps = ArrayList(binding!!.config!!.`interface`.includedApplications)
-                if (selectedApps.isNotEmpty())
-                    isExcluded = false
-            }
-            val fragment = AppListDialogFragment.newInstance(selectedApps, isExcluded)
-            childFragmentManager.setFragmentResultListener(AppListDialogFragment.REQUEST_SELECTION, viewLifecycleOwner) { _, bundle ->
-                requireNotNull(binding) { "Tried to set excluded/included apps while no view was loaded" }
-                val newSelections = requireNotNull(bundle.getStringArray(AppListDialogFragment.KEY_SELECTED_APPS))
-                val excluded = requireNotNull(bundle.getBoolean(AppListDialogFragment.KEY_IS_EXCLUDED))
-                if (excluded) {
-                    binding!!.config!!.`interface`.includedApplications.clear()
-                    binding!!.config!!.`interface`.excludedApplications.apply {
-                        clear()
-                        addAll(newSelections)
-                    }
-                } else {
-                    binding!!.config!!.`interface`.excludedApplications.clear()
-                    binding!!.config!!.`interface`.includedApplications.apply {
-                        clear()
-                        addAll(newSelections)
-                    }
-                }
-            }
-            fragment.show(childFragmentManager, null)
-        }
+        startActivity(Intent(requireContext(), SplitTunnelActivity::class.java))
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
