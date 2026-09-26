@@ -97,8 +97,8 @@ jobs:
           echo "Missing secret JANUS_DEBUG_KEYSTORE_B64" >&2
           exit 1
         fi
-        mkdir -p "$HOME/.android"
-        echo "${DEBUG_KEYSTORE_B64}" | base64 --decode > "$HOME/.android/debug.keystore"
+        echo "${DEBUG_KEYSTORE_B64}" | base64 --decode > "$RUNNER_TEMP/janus-debug.keystore"
+        echo "JANUS_DEBUG_KEYSTORE=$RUNNER_TEMP/janus-debug.keystore" >> "$GITHUB_ENV"
 
     - name: Build
       shell: bash

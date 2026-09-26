@@ -32,6 +32,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+    signingConfigs {
+        getByName("debug") {
+            providers.environmentVariable("JANUS_DEBUG_KEYSTORE").orNull?.let { storeFile = file(it) }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
