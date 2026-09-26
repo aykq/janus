@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import org.amnezia.awg.Application
 import org.amnezia.awg.R
 import org.amnezia.awg.backend.Tunnel
+import org.amnezia.awg.split.PrivateDns
 import org.amnezia.awg.split.SiteStore
 
 /**
@@ -94,10 +95,11 @@ class SitesActivity : AppCompatActivity() {
             privateDnsHost.setText(settings.privateDnsHost)
             textFieldsFilled = true
         }
-        privateDnsDetected.text = if (settings.lastDetectedPrivateDns.isBlank())
+        val detected = PrivateDns.detectHost(this) ?: settings.lastDetectedPrivateDns
+        privateDnsDetected.text = if (detected.isBlank())
             getString(R.string.sites_private_dns_not_detected)
         else
-            getString(R.string.sites_private_dns_detected, settings.lastDetectedPrivateDns)
+            getString(R.string.sites_private_dns_detected, detected)
 
         list.removeAllViews()
         empty.visibility = if (settings.sites.isEmpty()) View.VISIBLE else View.GONE

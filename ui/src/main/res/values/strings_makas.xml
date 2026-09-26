@@ -3,7 +3,7 @@
     <string name="sites_title">Site bazlı split tunnel</string>
     <string name="sites_menu">Siteler</string>
     <string name="sites_enabled">Bu siteler VPN dışında kalsın</string>
-    <string name="sites_description">Site adı veya IP/CIDR yaz. IP adreslerini Geçit bağlanırken kendisi bulur (DoH + sistem DNS). Değişiklikler tünel yeniden bağlanınca geçerli olur.</string>
+    <string name="sites_description">Site adı veya IP/CIDR yaz. IP adreslerini Makas bağlanırken kendisi bulur (DoH + sistem DNS). Değişiklikler tünel yeniden bağlanınca geçerli olur.</string>
     <string name="sites_api_warning">Bu özellik Android 13 ve üstünü gerektirir. Bu cihazda site listesi uygulanmaz.</string>
     <string name="sites_input_hint">ornek.com veya 1.2.3.0/24</string>
     <string name="sites_add">Ekle</string>
@@ -25,7 +25,7 @@
     <string name="sites_private_dns_description">Kapalıyken DNS sorguları da VPN\'den geçer (önerilen). Yalnız VPN açıkken \"Private DNS sunucusuna erişilemiyor\" hatası başka türlü çözülmezse aç: Private DNS sunucusunun IP\'leri tünel dışına alınır, sorgular şifreli (DoT) kalır ama gerçek IP\'nden gider.</string>
     <string name="sites_private_dns_host_hint">Private DNS hostname (boşsa otomatik)</string>
     <string name="sites_private_dns_detected">Algılanan Private DNS: %s</string>
-    <string name="sites_private_dns_not_detected">Private DNS algılanmadı (ilk bağlantıda kontrol edilir)</string>
+    <string name="sites_private_dns_not_detected">Private DNS algılanmadı (kapalı ya da otomatik modda)</string>
     <string name="sites_apply">Kaydet ve tüneli yeniden bağla</string>
     <string name="sites_saved">Kaydedildi</string>
     <string name="sites_applied">Kaydedildi, tünel yeniden bağlandı</string>

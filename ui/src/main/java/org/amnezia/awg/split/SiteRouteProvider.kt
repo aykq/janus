@@ -6,9 +6,6 @@
 package org.amnezia.awg.split
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.runBlocking
 import org.amnezia.awg.backend.GoBackend
@@ -36,8 +33,10 @@ class SiteRouteProvider(private val context: Context) : GoBackend.ExcludedRoutes
         val settings = runBlocking { SiteStore.snapshot() }
         val routes = LinkedHashSet<InetNetwork>()
         val hosts = LinkedHashSet<String>()
+        var siteCount = 0
 
         if (settings.enabled) {
+            siteCount = settings.sites.size
             for (entry in settings.sites) {
                 if (SiteStore.isNetwork(entry)) {
                     routes += InetNetwork.parse(entry)
@@ -49,10 +48,10 @@ class SiteRouteProvider(private val context: Context) : GoBackend.ExcludedRoutes
             }
         }
 
+        val detected = PrivateDns.detectHost(context)
+        if ((detected ?: "") != settings.lastDetectedPrivateDns)
+            runBlocking { SiteStore.setLastDetectedPrivateDns(detected ?: "") }
         if (settings.privateDnsBypass) {
-            val detected = detectPrivateDnsHost()
-            if (detected != settings.lastDetectedPrivateDns)
-                runBlocking { SiteStore.setLastDetectedPrivateDns(detected ?: "") }
             val host = settings.privateDnsHost.ifBlank { detected ?: "" }
             if (host.isNotBlank())
                 hosts += host
@@ -71,7 +70,7 @@ class SiteRouteProvider(private val context: Context) : GoBackend.ExcludedRoutes
             }
         }
 
-        Log.i(TAG, "Bypass routes: ${routes.size} for ${hosts.size} host(s)")
+        Log.i(TAG, "Bypass routes: ${routes.size} for $siteCount site(s), ${hosts.size} lookup host(s) incl. www. and Private DNS")
         return routes
     }
 
@@ -108,23 +107,8 @@ class SiteRouteProvider(private val context: Context) : GoBackend.ExcludedRoutes
         null
     }
 
-    /** Private DNS hostname of the underlying (non-VPN) network, if strict mode is on. */
-    private fun detectPrivateDnsHost(): String? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null
-        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
-        @Suppress("DEPRECATION")
-        val networks = cm.allNetworks
-        for (network in networks) {
-            val caps = cm.getNetworkCapabilities(network) ?: continue
-            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue
-            val name = cm.getLinkProperties(network)?.privateDnsServerName
-            if (!name.isNullOrBlank()) return name.lowercase()
-        }
-        return null
-    }
-
     companion object {
-        private const val TAG = "Gecit/SiteRoutes"
+        private const val TAG = "Makas/SiteRoutes"
         private const val LOOKUP_BUDGET_MS = 5000L
     }
 }

@@ -5,6 +5,7 @@
 
 package org.amnezia.awg.split
 
+import android.net.TrafficStats
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.IOException
@@ -21,6 +22,7 @@ object DohResolver {
     private const val TYPE_A = 1
     private const val TYPE_AAAA = 28
     private const val TIMEOUT_MS = 3000
+    private const val TRAFFIC_TAG = 0x4d4b // "MK"
 
     fun resolve(url: String, host: String): List<InetAddress> {
         val name = IDN.toASCII(host.trimEnd('.'))
@@ -40,6 +42,7 @@ object DohResolver {
 
     private fun query(url: String, name: String, type: Int): List<InetAddress> {
         val body = buildQuery(name, type)
+        TrafficStats.setThreadStatsTag(TRAFFIC_TAG) // untagged sockets trip StrictMode in debug
         val conn = URL(url).openConnection() as HttpURLConnection
         try {
             conn.connectTimeout = TIMEOUT_MS
@@ -55,6 +58,7 @@ object DohResolver {
             return parseAnswers(response, type)
         } finally {
             conn.disconnect()
+            TrafficStats.clearThreadStatsTag()
         }
     }
 
