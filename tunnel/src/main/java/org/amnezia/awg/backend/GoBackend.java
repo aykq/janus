@@ -49,7 +49,8 @@ public final class GoBackend implements Backend {
     private static final String TAG = "AmneziaWG/GoBackend";
     @Nullable private static AlwaysOnCallback alwaysOnCallback;
     @Nullable private static SplitTunnelProvider splitTunnelProvider;
-    private static GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
+    private static volatile GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
+    private static final long SERVICE_STOP_TIMEOUT_MS = 2000;
     private final Context context;
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
@@ -495,9 +496,16 @@ public final class GoBackend implements Backend {
             currentTunnelHandle = -1;
             currentConfig = null;
             awgTurnOff(handleToClose);
+            final GhettoCompletableFuture<VpnService> stopping = vpnService;
             try {
-                vpnService.get(0, TimeUnit.NANOSECONDS).stopSelf();
+                stopping.get(0, TimeUnit.NANOSECONDS).stopSelf();
             } catch (final TimeoutException ignored) { }
+            // A quick UP must not reuse the dying service: its protect() no longer keeps the handshake out of the tunnel.
+            final long deadline = System.currentTimeMillis() + SERVICE_STOP_TIMEOUT_MS;
+            while (vpnService == stopping && stopping.isDone() && System.currentTimeMillis() < deadline)
+                Thread.sleep(20);
+            if (vpnService == stopping && stopping.isDone())
+                Log.w(TAG, "VpnService did not stop within " + SERVICE_STOP_TIMEOUT_MS + " ms");
         }
 
         tunnel.onStateChange(state);
