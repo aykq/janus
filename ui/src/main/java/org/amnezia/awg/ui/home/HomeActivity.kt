@@ -22,8 +22,3 @@ class HomeActivity : ComponentActivity() {
         }
     }
 }
-
-@androidx.compose.runtime.Composable
-fun HomeRoute() {
-    androidx.compose.material3.Text("Janus")
-}
