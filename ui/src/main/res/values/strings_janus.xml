@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="tunnels_title">Tüneller</string>
     <string name="sites_title">Site bazlı split tunnel</string>
     <string name="sites_menu">Siteler</string>
     <string name="sites_enabled">Bu siteler VPN dışında kalsın</string>

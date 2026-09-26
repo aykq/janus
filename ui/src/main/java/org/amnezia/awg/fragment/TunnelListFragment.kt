@@ -28,6 +28,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import org.amnezia.awg.Application
 import org.amnezia.awg.R
+import org.amnezia.awg.activity.MainActivity
 import org.amnezia.awg.activity.TunnelCreatorActivity
 import org.amnezia.awg.databinding.ObservableKeyedRecyclerViewAdapter.RowConfigurationHandler
 import org.amnezia.awg.databinding.TunnelListFragmentBinding
@@ -88,6 +89,37 @@ class TunnelListFragment : BaseFragment() {
                 for (i in checkedItems) actionModeListener.setItemChecked(i, true)
             }
         }
+
+        val intent = requireActivity().intent
+        if (savedInstanceState == null && intent.getBooleanExtra(MainActivity.EXTRA_ADD_TUNNEL, false)) {
+            intent.removeExtra(MainActivity.EXTRA_ADD_TUNNEL)
+            view.post { showAddTunnelsSheet() }
+        }
+    }
+
+    fun showAddTunnelsSheet() {
+        if (childFragmentManager.findFragmentByTag("BOTTOM_SHEET") != null) return
+        childFragmentManager.setFragmentResultListener(AddTunnelsSheet.REQUEST_KEY_NEW_TUNNEL, viewLifecycleOwner) { _, bundle ->
+            when (bundle.getString(AddTunnelsSheet.REQUEST_METHOD)) {
+                AddTunnelsSheet.REQUEST_CREATE -> {
+                    startActivity(Intent(requireActivity(), TunnelCreatorActivity::class.java))
+                }
+
+                AddTunnelsSheet.REQUEST_IMPORT -> {
+                    tunnelFileImportResultLauncher.launch("*/*")
+                }
+
+                AddTunnelsSheet.REQUEST_SCAN -> {
+                    qrImportResultLauncher.launch(
+                        ScanOptions()
+                            .setOrientationLocked(false)
+                            .setBeepEnabled(false)
+                            .setPrompt(getString(R.string.qr_code_hint))
+                    )
+                }
+            }
+        }
+        AddTunnelsSheet().showNow(childFragmentManager, "BOTTOM_SHEET")
     }
 
     override fun onCreateView(
@@ -96,33 +128,8 @@ class TunnelListFragment : BaseFragment() {
     ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         binding = TunnelListFragmentBinding.inflate(inflater, container, false)
-        val bottomSheet = AddTunnelsSheet()
         binding?.apply {
-            createFab.setOnClickListener {
-                if (childFragmentManager.findFragmentByTag("BOTTOM_SHEET") != null)
-                    return@setOnClickListener
-                childFragmentManager.setFragmentResultListener(AddTunnelsSheet.REQUEST_KEY_NEW_TUNNEL, viewLifecycleOwner) { _, bundle ->
-                    when (bundle.getString(AddTunnelsSheet.REQUEST_METHOD)) {
-                        AddTunnelsSheet.REQUEST_CREATE -> {
-                            startActivity(Intent(requireActivity(), TunnelCreatorActivity::class.java))
-                        }
-
-                        AddTunnelsSheet.REQUEST_IMPORT -> {
-                            tunnelFileImportResultLauncher.launch("*/*")
-                        }
-
-                        AddTunnelsSheet.REQUEST_SCAN -> {
-                            qrImportResultLauncher.launch(
-                                ScanOptions()
-                                    .setOrientationLocked(false)
-                                    .setBeepEnabled(false)
-                                    .setPrompt(getString(R.string.qr_code_hint))
-                            )
-                        }
-                    }
-                }
-                bottomSheet.showNow(childFragmentManager, "BOTTOM_SHEET")
-            }
+            createFab.setOnClickListener { showAddTunnelsSheet() }
             executePendingBindings()
         }
         backPressedCallback = requireActivity().onBackPressedDispatcher.addCallback(this) { actionMode?.finish() }

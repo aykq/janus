@@ -88,10 +88,6 @@ class MainActivity : BaseActivity(), FragmentManager.OnBackStackChangedListener 
             }
             // This menu item is handled by the editor fragment.
             R.id.menu_action_save -> false
-            R.id.menu_sites -> {
-                startActivity(Intent(this, SitesActivity::class.java))
-                true
-            }
 
             R.id.menu_settings -> {
                 startActivity(Intent(this, SettingsActivity::class.java))
@@ -130,5 +126,9 @@ class MainActivity : BaseActivity(), FragmentManager.OnBackStackChangedListener 
             }
         }
         return true
+    }
+
+    companion object {
+        const val EXTRA_ADD_TUNNEL = "janus.add_tunnel"
     }
 }

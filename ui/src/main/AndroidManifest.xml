@@ -52,8 +52,9 @@
             android:theme="@style/NoBackgroundTheme" />
 
         <activity
-            android:name=".activity.MainActivity"
-            android:exported="true">
+            android:name=".ui.home.HomeActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -64,6 +65,15 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activity.TunnelEditActivity"
+            android:parentActivityName=".ui.home.HomeActivity" />
+
+        <activity
+            android:name=".activity.MainActivity"
+            android:label="@string/tunnels_title"
+            android:parentActivityName=".ui.home.HomeActivity" />
 
         <activity
             android:name=".activity.TvMainActivity"

@@ -8,12 +8,14 @@ val pkg: String = providers.gradleProperty("amneziawgPackageName").get()
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
 }
 
 android {
     buildFeatures {
         buildConfig = true
+        compose = true
         dataBinding = true
         viewBinding = true
     }
@@ -64,6 +66,14 @@ android {
 
 dependencies {
     implementation(project(":tunnel"))
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.appcompat)
