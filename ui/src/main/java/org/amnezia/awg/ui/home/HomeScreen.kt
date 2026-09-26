@@ -8,7 +8,6 @@ package org.amnezia.awg.ui.home
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.text.format.DateUtils
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,8 +62,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.amnezia.awg.Application
 import org.amnezia.awg.R
@@ -76,6 +79,7 @@ import org.amnezia.awg.backend.GoBackend
 import org.amnezia.awg.split.SplitMode
 import org.amnezia.awg.split.SplitStore
 import org.amnezia.awg.util.ErrorMessages
+import java.util.Locale
 
 @Composable
 fun HomeRoute(viewModel: HomeViewModel = viewModel()) {
@@ -92,6 +96,16 @@ fun HomeRoute(viewModel: HomeViewModel = viewModel()) {
         state.error?.let {
             snackbar.showSnackbar(it)
             viewModel.clearError()
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                viewModel.refresh()
+                delay(1000)
+            }
         }
     }
 
@@ -222,6 +236,11 @@ private fun ConnectButton(connection: Connection, onToggle: () -> Unit) {
     }
 }
 
+private fun formatElapsed(elapsedMillis: Long): String {
+    val s = (elapsedMillis / 1000).coerceAtLeast(0)
+    return String.format(Locale.ROOT, "%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60)
+}
+
 @Composable
 private fun StatusText(state: HomeState) {
     val context = LocalContext.current
@@ -232,7 +251,7 @@ private fun StatusText(state: HomeState) {
                 Connection.OFF -> stringResource(R.string.home_status_off)
                 Connection.CONNECTING -> stringResource(R.string.home_status_connecting)
                 Connection.CONNECTED -> if (since == null) stringResource(R.string.home_status_connected)
-                else stringResource(R.string.home_status_connected_since, DateUtils.formatElapsedTime((state.nowMillis - since) / 1000))
+                else stringResource(R.string.home_status_connected_since, formatElapsed(state.nowMillis - since))
             },
             style = MaterialTheme.typography.titleLarge,
         )

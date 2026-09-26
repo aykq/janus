@@ -7,12 +7,13 @@ package org.amnezia.awg.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.amnezia.awg.Application
 import org.amnezia.awg.backend.Tunnel
 import org.amnezia.awg.model.ObservableTunnel
@@ -40,15 +41,10 @@ class HomeViewModel : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
     private var busy = false
+    private val refreshMutex = Mutex()
 
     init {
         viewModelScope.launch { SplitStore.settings.collect { s -> _state.update { it.copy(split = s) } } }
-        viewModelScope.launch {
-            while (true) {
-                refresh()
-                delay(1000)
-            }
-        }
     }
 
     private suspend fun selectedTunnel(): ObservableTunnel? {
@@ -56,8 +52,8 @@ class HomeViewModel : ViewModel() {
         return manager.lastUsedTunnel?.takeIf { it in tunnels } ?: tunnels.firstOrNull()
     }
 
-    fun refresh() {
-        viewModelScope.launch {
+    suspend fun refresh() {
+        refreshMutex.withLock {
             val tunnels = manager.getTunnels()
             val tunnel = selectedTunnel()
             val up = tunnel?.state == Tunnel.State.UP
