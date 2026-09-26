@@ -86,6 +86,20 @@ jobs:
         echo "${KEYSTORE_B64}" | base64 --decode > release.keystore.jks
         echo "KEYSTORE_PATH=${PWD}/release.keystore.jks" >> "$GITHUB_ENV"
 
+    - name: Install fixed debug keystore
+      shell: bash
+      env:
+        DEBUG_KEYSTORE_B64: ${{ secrets.JANUS_DEBUG_KEYSTORE_B64 }}
+      run: |
+        set -euo pipefail
+        # Without a fixed key every run signs debug APKs differently and in-place updates fail.
+        if [[ -z "${DEBUG_KEYSTORE_B64}" ]]; then
+          echo "Missing secret JANUS_DEBUG_KEYSTORE_B64" >&2
+          exit 1
+        fi
+        mkdir -p "$HOME/.android"
+        echo "${DEBUG_KEYSTORE_B64}" | base64 --decode > "$HOME/.android/debug.keystore"
+
     - name: Build
       shell: bash
       run: |
