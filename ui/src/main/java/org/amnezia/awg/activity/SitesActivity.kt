@@ -29,7 +29,7 @@ import org.amnezia.awg.Application
 import org.amnezia.awg.R
 import org.amnezia.awg.backend.Tunnel
 import org.amnezia.awg.split.PrivateDns
-import org.amnezia.awg.split.SiteStore
+import org.amnezia.awg.split.SplitStore
 
 /**
  * Edits the global list of sites/IPs that bypass the tunnel, plus DNS options.
@@ -42,7 +42,6 @@ class SitesActivity : AppCompatActivity() {
     private lateinit var empty: TextView
     private lateinit var dohUrl: TextInputEditText
     private lateinit var privateDnsBypass: SwitchMaterial
-    private lateinit var privateDnsHost: TextInputEditText
     private lateinit var privateDnsDetected: TextView
     private var textFieldsFilled = false
 
@@ -59,7 +58,6 @@ class SitesActivity : AppCompatActivity() {
         empty = findViewById(R.id.sites_empty)
         dohUrl = findViewById(R.id.doh_url)
         privateDnsBypass = findViewById(R.id.private_dns_bypass)
-        privateDnsHost = findViewById(R.id.private_dns_host)
         privateDnsDetected = findViewById(R.id.private_dns_detected)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
@@ -73,26 +71,25 @@ class SitesActivity : AppCompatActivity() {
             } else false
         }
         enabled.setOnClickListener {
-            lifecycleScope.launch { SiteStore.setEnabled(enabled.isChecked) }
+            lifecycleScope.launch { SplitStore.setEnabled(enabled.isChecked) }
         }
         privateDnsBypass.setOnClickListener {
-            lifecycleScope.launch { SiteStore.setPrivateDnsBypass(privateDnsBypass.isChecked) }
+            lifecycleScope.launch { SplitStore.setPrivateDnsBypass(privateDnsBypass.isChecked) }
         }
         findViewById<MaterialButton>(R.id.sites_apply).setOnClickListener { saveAndApply() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                SiteStore.settings.collect { render(it) }
+                SplitStore.settings.collect { render(it) }
             }
         }
     }
 
-    private fun render(settings: SiteStore.Settings) {
+    private fun render(settings: SplitStore.Settings) {
         enabled.isChecked = settings.enabled
         privateDnsBypass.isChecked = settings.privateDnsBypass
         if (!textFieldsFilled) {
             dohUrl.setText(settings.dohUrl)
-            privateDnsHost.setText(settings.privateDnsHost)
             textFieldsFilled = true
         }
         val detected = PrivateDns.detectHost(this) ?: settings.lastDetectedPrivateDns
@@ -102,15 +99,9 @@ class SitesActivity : AppCompatActivity() {
             getString(R.string.sites_private_dns_detected, detected)
 
         list.removeAllViews()
-        empty.visibility = if (settings.sites.isEmpty()) View.VISIBLE else View.GONE
-        for (entry in settings.sites)
-            list.addView(siteRow(entry, cachedCount(settings, entry)))
-    }
-
-    private fun cachedCount(settings: SiteStore.Settings, entry: String): Int? {
-        if (SiteStore.isNetwork(entry)) return null
-        return ((settings.cache[entry] ?: emptyList()) + (settings.cache["www.$entry"] ?: emptyList()))
-            .distinct().size
+        empty.visibility = if (settings.sitesExcluded.isEmpty()) View.VISIBLE else View.GONE
+        for (entry in settings.sitesExcluded)
+            list.addView(siteRow(entry, settings.ipCount(entry)))
     }
 
     private fun siteRow(entry: String, ipCount: Int?): View {
@@ -147,7 +138,7 @@ class SitesActivity : AppCompatActivity() {
         val raw = input.text?.toString().orEmpty()
         if (raw.isBlank()) return
         lifecycleScope.launch {
-            val entry = SiteStore.addSite(raw)
+            val entry = SplitStore.addSite(raw)
             if (entry == null) {
                 Snackbar.make(root, getString(R.string.sites_invalid, raw), Snackbar.LENGTH_LONG).show()
             } else {
@@ -160,7 +151,7 @@ class SitesActivity : AppCompatActivity() {
     private fun confirmRemove(entry: String) {
         MaterialAlertDialogBuilder(this)
             .setMessage(getString(R.string.sites_remove_confirm, entry))
-            .setPositiveButton(R.string.sites_delete) { _, _ -> lifecycleScope.launch { SiteStore.removeSite(entry) } }
+            .setPositiveButton(R.string.sites_delete) { _, _ -> lifecycleScope.launch { SplitStore.removeSite(entry) } }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
@@ -172,8 +163,7 @@ class SitesActivity : AppCompatActivity() {
                 Snackbar.make(root, R.string.sites_doh_invalid, Snackbar.LENGTH_LONG).show()
                 return@launch
             }
-            SiteStore.setDohUrl(url)
-            SiteStore.setPrivateDnsHost(privateDnsHost.text?.toString().orEmpty())
+            SplitStore.setDohUrl(url)
 
             val active = Application.getTunnelManager().getTunnels().filter { it.state == Tunnel.State.UP }
             for (tunnel in active) {

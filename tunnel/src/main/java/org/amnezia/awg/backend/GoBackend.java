@@ -7,6 +7,7 @@ package org.amnezia.awg.backend;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.IpPrefix;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -25,7 +26,6 @@ import org.amnezia.awg.crypto.KeyFormatException;
 import org.amnezia.awg.util.NonNullForAll;
 
 import java.net.InetAddress;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +48,7 @@ public final class GoBackend implements Backend {
     private static final int DNS_RESOLUTION_RETRIES = 10;
     private static final String TAG = "AmneziaWG/GoBackend";
     @Nullable private static AlwaysOnCallback alwaysOnCallback;
-    @Nullable private static ExcludedRoutesProvider excludedRoutesProvider;
+    @Nullable private static SplitTunnelProvider splitTunnelProvider;
     private static GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
     private final Context context;
     @Nullable private Config currentConfig;
@@ -77,8 +77,8 @@ public final class GoBackend implements Backend {
      * Set a provider for routes that bypass the tunnel (Janus site-based split tunneling).
      * Only applied on API 33+ and only when the tunnel carries the default route.
      */
-    public static void setExcludedRoutesProvider(@Nullable final ExcludedRoutesProvider provider) {
-        excludedRoutesProvider = provider;
+    public static void setSplitTunnelProvider(@Nullable final SplitTunnelProvider provider) {
+        splitTunnelProvider = provider;
     }
 
     public static void setAlwaysOnCallback(final AlwaysOnCallback cb) {
@@ -387,11 +387,31 @@ public final class GoBackend implements Backend {
             final VpnService.Builder builder = service.getBuilder();
             builder.setSession(tunnel.getName());
 
-            for (final String excludedApplication : config.getInterface().getExcludedApplications())
-                builder.addDisallowedApplication(excludedApplication);
+            SplitPlan plan = SplitPlan.EMPTY;
+            final SplitTunnelProvider provider = splitTunnelProvider;
+            if (provider != null) {
+                try {
+                    plan = provider.getPlan(config);
+                } catch (final Exception e) {
+                    Log.e(TAG, "Split tunnel provider failed", e);
+                }
+            }
+            plan = plan.merge(config.getInterface().getExcludedApplications(), config.getInterface().getIncludedApplications());
 
-            for (final String includedApplication : config.getInterface().getIncludedApplications())
-                builder.addAllowedApplication(includedApplication);
+            for (final String app : plan.getIncludedApps()) {
+                try {
+                    builder.addAllowedApplication(app);
+                } catch (final PackageManager.NameNotFoundException e) {
+                    Log.w(TAG, "Skipping unknown included app " + app);
+                }
+            }
+            for (final String app : plan.getExcludedApps()) {
+                try {
+                    builder.addDisallowedApplication(app);
+                } catch (final PackageManager.NameNotFoundException e) {
+                    Log.w(TAG, "Skipping unknown excluded app " + app);
+                }
+            }
 
             for (final InetNetwork addr : config.getInterface().getAddresses())
                 builder.addAddress(addr.getAddress(), addr.getMask());
@@ -403,32 +423,36 @@ public final class GoBackend implements Backend {
                 builder.addSearchDomain(dnsSearchDomain);
 
             boolean sawDefaultRoute = false;
-            for (final Peer peer : config.getPeers()) {
-                for (final InetNetwork addr : peer.getAllowedIps()) {
-                    if (addr.getMask() == 0)
-                        sawDefaultRoute = true;
-                    builder.addRoute(addr.getAddress(), addr.getMask());
-                }
-            }
-
-            if (sawDefaultRoute && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                final ExcludedRoutesProvider provider = excludedRoutesProvider;
-                Collection<InetNetwork> excludedRoutes = Collections.emptyList();
-                if (provider != null) {
+            final java.util.List<String> includedRoutes = plan.getIncludedRoutes();
+            if (includedRoutes != null) {
+                for (final String route : includedRoutes) {
                     try {
-                        excludedRoutes = provider.getExcludedRoutes(config);
+                        final InetNetwork net = InetNetwork.parse(route);
+                        builder.addRoute(net.getAddress(), net.getMask());
                     } catch (final Exception e) {
-                        Log.e(TAG, "Excluded routes provider failed", e);
+                        Log.w(TAG, "Skipping invalid included route " + route, e);
                     }
                 }
-                for (final InetNetwork addr : excludedRoutes) {
-                    try {
-                        builder.excludeRoute(new IpPrefix(addr.getAddress(), addr.getMask()));
-                    } catch (final IllegalArgumentException e) {
-                        Log.w(TAG, "Skipping invalid excluded route " + addr, e);
+                Log.i(TAG, "Included " + includedRoutes.size() + " route(s) in tunnel");
+            } else {
+                for (final Peer peer : config.getPeers()) {
+                    for (final InetNetwork addr : peer.getAllowedIps()) {
+                        if (addr.getMask() == 0)
+                            sawDefaultRoute = true;
+                        builder.addRoute(addr.getAddress(), addr.getMask());
                     }
                 }
-                Log.i(TAG, "Excluded " + excludedRoutes.size() + " route(s) from tunnel");
+                if (sawDefaultRoute && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    for (final String route : plan.getExcludedRoutes()) {
+                        try {
+                            final InetNetwork net = InetNetwork.parse(route);
+                            builder.excludeRoute(new IpPrefix(net.getAddress(), net.getMask()));
+                        } catch (final Exception e) {
+                            Log.w(TAG, "Skipping invalid excluded route " + route, e);
+                        }
+                    }
+                    Log.i(TAG, "Excluded " + plan.getExcludedRoutes().size() + " route(s) from tunnel");
+                }
             }
 
             // "Kill-switch" semantics
@@ -480,12 +504,9 @@ public final class GoBackend implements Backend {
         tunnel.onStateChange(state);
     }
 
-    /**
-     * Supplies networks that must bypass the tunnel. Called on the backend thread right before
-     * the VPN interface is built, so it may block briefly (e.g. to resolve domains).
-     */
-    public interface ExcludedRoutesProvider {
-        Collection<InetNetwork> getExcludedRoutes(Config config);
+    // Called on the backend thread right before establish(); may block briefly.
+    public interface SplitTunnelProvider {
+        SplitPlan getPlan(Config config);
     }
 
     /**

@@ -26,6 +26,7 @@ import org.amnezia.awg.util.ErrorMessages
 import org.amnezia.awg.util.UserKnobs
 import org.amnezia.awg.util.applicationScope
 import org.amnezia.awg.config.Config
+import org.amnezia.awg.split.ConfigAppMigration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,7 +58,8 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
             throw IllegalArgumentException(context.getString(R.string.tunnel_error_invalid_name))
         if (tunnelMap.containsKey(name))
             throw IllegalArgumentException(context.getString(R.string.tunnel_error_already_exists, name))
-        addToList(name, withContext(Dispatchers.IO) { configStore.create(name, config!!) }, Tunnel.State.DOWN)
+        val cleaned = ConfigAppMigration.migrate(config!!) ?: config
+        addToList(name, withContext(Dispatchers.IO) { configStore.create(name, cleaned) }, Tunnel.State.DOWN)
     }
 
     suspend fun delete(tunnel: ObservableTunnel) = withContext(Dispatchers.Main.immediate) {
@@ -94,6 +96,13 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
             notifyPropertyChanged(BR.lastUsedTunnel)
             applicationScope.launch { UserKnobs.setLastUsedTunnel(value?.name) }
         }
+
+    fun selectTunnel(tunnel: ObservableTunnel) {
+        lastUsedTunnel = tunnel
+    }
+
+    private val connectedSince = mutableMapOf<String, Long>()
+    val connectedAt: Map<String, Long> get() = connectedSince
 
     suspend fun getTunnelConfig(tunnel: ObservableTunnel): Config = withContext(Dispatchers.Main.immediate) {
         tunnel.onConfigChanged(withContext(Dispatchers.IO) { configStore.load(tunnel.name) })!!
@@ -145,9 +154,24 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
             val lastUsedName = UserKnobs.lastUsedTunnel.first()
             if (lastUsedName != null)
                 lastUsedTunnel = tunnelMap[lastUsedName]
+            migrateAppLists()
             haveLoaded = true
             restoreState(true)
             tunnels.complete(tunnelMap)
+        }
+    }
+
+    private suspend fun migrateAppLists() {
+        for (tunnel in tunnelMap.toList()) {
+            try {
+                val config = withContext(Dispatchers.IO) { configStore.load(tunnel.name) }
+                val cleaned = ConfigAppMigration.migrate(config) ?: continue
+                withContext(Dispatchers.IO) { configStore.save(tunnel.name, cleaned) }
+                tunnel.onConfigChanged(cleaned)
+                Log.i(TAG, "Moved app list of ${tunnel.name} into split settings")
+            } catch (e: Throwable) {
+                Log.e(TAG, "App list migration failed for ${tunnel.name}", e)
+            }
         }
     }
 
@@ -183,9 +207,10 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
     }
 
     suspend fun setTunnelConfig(tunnel: ObservableTunnel, config: Config): Config = withContext(Dispatchers.Main.immediate) {
+        val cleaned = ConfigAppMigration.migrate(config) ?: config
         tunnel.onConfigChanged(withContext(Dispatchers.IO) {
-            getBackend().setState(tunnel, tunnel.state, config)
-            configStore.save(tunnel.name, config)
+            getBackend().setState(tunnel, tunnel.state, cleaned)
+            configStore.save(tunnel.name, cleaned)
         })!!
     }
 
@@ -229,6 +254,8 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
         var throwable: Throwable? = null
         try {
             newState = withContext(Dispatchers.IO) { getBackend().setState(tunnel, state, tunnel.getConfigAsync()) }
+            if (newState == Tunnel.State.UP) connectedSince.getOrPut(tunnel.name) { System.currentTimeMillis() }
+            else connectedSince.remove(tunnel.name)
             if (newState == Tunnel.State.UP)
                 lastUsedTunnel = tunnel
         } catch (e: Throwable) {
