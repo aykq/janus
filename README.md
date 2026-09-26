@@ -10,11 +10,7 @@ Hedef: Proton'un (veya herhangi bir sağlayıcının) WireGuard config'iyle, Amn
 uygulamasına ihtiyaç duymadan:
 
 - **Uygulama bazlı split tunnel**: upstream'den gelir (tünel editörü → Excluded applications).
-- **Site/IP bazlı split tunnel**: ana menüde **Siteler**. Site adı veya IP/CIDR yazılır, listedekiler
-  VPN dışında kalır. Domain'ler bağlanırken DoH ve sistem DNS'i ile paralel çözülür, iki cevabın
-  birleşimi tünel dışına alınır (CDN'ler resolver'a göre farklı IP döndüğü için). Çözülen IP'ler
-  önbelleğe birikir; yavaş/başarısız sorguda önbellek kullanılır. `ornek.com` girilince
-  `www.ornek.com` da çözülür. Android 13+ (`VpnService.Builder.excludeRoute`).
+- **Split tunnel**: ana ekrandaki karttan; uygulama ve site listeleri global, her biri için 'VPN dışında tut' veya 'Sadece bunlar VPN'den' modu.
 - **Private DNS bypass** (varsayılan kapalı, son çare): VPN açıkken "Private DNS sunucusuna
   erişilemiyor" hatasının kök nedeni çözülemezse. Private DNS hostname'i çözülür, IP'leri tünel
   dışına alınır; sorgular DoT ile şifreli kalır ama VPN IP'si yerine gerçek IP'den gider.

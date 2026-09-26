@@ -91,7 +91,7 @@ jobs:
       run: |
         set -euo pipefail
         chmod +x ./gradlew
-        ./gradlew --no-daemon --stacktrace ${{ steps.cfg.outputs.gradle_task }}
+        ./gradlew --no-daemon --stacktrace :ui:testDebugUnitTest ${{ steps.cfg.outputs.gradle_task }}
 
     - name: Locate built artifact
       id: locate
