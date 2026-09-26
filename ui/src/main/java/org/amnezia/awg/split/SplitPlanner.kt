@@ -17,6 +17,7 @@ object SplitPlanner {
         val resolved: Map<String, List<String>>,
         val bypassIps: List<String>,
         val dnsServers: List<String>,
+        val privateDnsIps: List<String>,
         val ownPackage: String,
         val isInstalled: (String) -> Boolean,
     )
@@ -32,7 +33,8 @@ object SplitPlanner {
 
         val excludedRoutes = ((if (sitesInclude) emptyList() else siteRoutes) + input.bypassIps.map(::hostRoute)).distinct()
         val includedRoutes = if (sitesInclude && siteRoutes.isNotEmpty())
-            (siteRoutes + input.dnsServers.map(::hostRoute)).distinct()
+            // Android validates Private DNS over the VPN network; without a route it reports no internet.
+            (siteRoutes + (input.dnsServers + input.privateDnsIps).map(::hostRoute)).distinct()
         else null
 
         return SplitPlan(

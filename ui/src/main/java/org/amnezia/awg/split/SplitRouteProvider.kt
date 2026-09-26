@@ -37,8 +37,10 @@ class SplitRouteProvider(private val context: Context) : GoBackend.SplitTunnelPr
         if ((detected ?: "") != settings.lastDetectedPrivateDns)
             runBlocking { SplitStore.setLastDetectedPrivateDns(detected ?: "") }
         val bypassHost = detected?.takeIf { settings.privateDnsBypass }
+        val sitesInclude = settings.enabled && settings.sitesMode == SplitMode.INCLUDE
+        val tunnelDnsHost = detected?.takeIf { sitesInclude }
 
-        val lookups = hosts + listOfNotNull(bypassHost)
+        val lookups = hosts + listOfNotNull(bypassHost, tunnelDnsHost)
         val merged = if (lookups.isEmpty()) emptyMap() else resolveAll(lookups, settings.dohUrl)
 
         val plan = SplitPlanner.plan(SplitPlanner.Input(
@@ -50,6 +52,7 @@ class SplitRouteProvider(private val context: Context) : GoBackend.SplitTunnelPr
             resolved = hosts.associateWith { merged[it] ?: emptyList() },
             bypassIps = bypassHost?.let { merged[it] } ?: emptyList(),
             dnsServers = config.`interface`.dnsServers.map { it.hostAddress!! },
+            privateDnsIps = tunnelDnsHost?.let { merged[it] } ?: emptyList(),
             ownPackage = context.packageName,
             isInstalled = ::isInstalled,
         ))

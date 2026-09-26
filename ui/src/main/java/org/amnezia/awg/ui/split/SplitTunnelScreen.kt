@@ -67,6 +67,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -119,7 +120,7 @@ fun SplitTunnelScreen(viewModel: SplitTunnelViewModel, onBack: () -> Unit) {
                     }
                 }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SnackbarHost(snackbar, modifier = Modifier.imePadding()) },
     ) { padding ->
         val settings = state.settings
         if (settings == null) {
@@ -284,7 +285,9 @@ private fun AddSiteRow(viewModel: SplitTunnelViewModel, snackbar: SnackbarHostSt
 private fun SiteRow(entry: String, ipCount: Int?, viewModel: SplitTunnelViewModel, snackbar: SnackbarHostState, scope: CoroutineScope) {
     val removedText = stringResource(R.string.split_site_removed, entry)
     val undo = stringResource(R.string.split_undo)
+    val focusManager = LocalFocusManager.current
     val remove = {
+        focusManager.clearFocus()
         viewModel.removeSite(entry)
         scope.launch {
             if (snackbar.showSnackbar(removedText, undo, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed)

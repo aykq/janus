@@ -158,7 +158,7 @@ object SplitStore {
     }
 
     fun normalize(raw: String): String? {
-        var s = raw.trim().lowercase()
+        var s = raw.filterNot { it.isWhitespace() }.lowercase()
         s = s.substringAfter("://")
         s = s.substringBefore('/').let { if (s.contains('/') && isNetwork(s)) s else it }
         if (isNetwork(s)) return InetNetwork.parse(s).toString()

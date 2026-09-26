@@ -15,6 +15,7 @@ class SplitPlannerTest {
         resolved: Map<String, List<String>> = emptyMap(),
         bypassIps: List<String> = emptyList(),
         dnsServers: List<String> = listOf("10.2.0.1"),
+        privateDnsIps: List<String> = emptyList(),
         installed: Set<String> = apps,
     ) = SplitPlanner.Input(
         enabled = enabled,
@@ -25,6 +26,7 @@ class SplitPlannerTest {
         resolved = resolved,
         bypassIps = bypassIps,
         dnsServers = dnsServers,
+        privateDnsIps = privateDnsIps,
         ownPackage = "tr.aykq.janus",
         isInstalled = { it in installed },
     )
@@ -72,6 +74,26 @@ class SplitPlannerTest {
             resolved = mapOf("ipinfo.io" to listOf("34.117.59.81")),
         ))
         assertEquals(listOf("34.117.59.81/32", "10.2.0.1/32"), plan.includedRoutes)
+    }
+
+    @Test
+    fun includeSiteModeRoutesPrivateDnsThroughTunnel() {
+        val plan = SplitPlanner.plan(input(
+            sitesMode = SplitMode.INCLUDE,
+            resolved = mapOf("ipinfo.io" to listOf("34.117.59.81")),
+            privateDnsIps = listOf("76.76.2.11"),
+        ))
+        assertEquals(listOf("34.117.59.81/32", "10.2.0.1/32", "76.76.2.11/32"), plan.includedRoutes)
+    }
+
+    @Test
+    fun excludeSiteModeIgnoresPrivateDnsIps() {
+        val plan = SplitPlanner.plan(input(
+            resolved = mapOf("ifconfig.me" to listOf("34.160.111.145")),
+            privateDnsIps = listOf("76.76.2.11"),
+        ))
+        assertEquals(listOf("34.160.111.145/32"), plan.excludedRoutes)
+        assertNull(plan.includedRoutes)
     }
 
     @Test
