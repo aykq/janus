@@ -37,6 +37,7 @@ public final class SplitPlan {
 
     public List<String> getExcludedRoutes() { return excludedRoutes; }
 
+    // Null keeps the config's AllowedIPs; an empty list would route nothing through the tunnel.
     @Nullable
     public List<String> getIncludedRoutes() { return includedRoutes; }
 
@@ -44,6 +45,7 @@ public final class SplitPlan {
         final Set<String> included = new LinkedHashSet<>(configIncludedApps);
         included.addAll(includedApps);
         final Set<String> excluded = new LinkedHashSet<>();
+        // VpnService.Builder throws if both allowed and disallowed apps are set.
         if (included.isEmpty()) {
             excluded.addAll(configExcludedApps);
             excluded.addAll(excludedApps);
