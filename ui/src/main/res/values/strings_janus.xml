@@ -3,7 +3,7 @@
     <string name="sites_title">Site bazlı split tunnel</string>
     <string name="sites_menu">Siteler</string>
     <string name="sites_enabled">Bu siteler VPN dışında kalsın</string>
-    <string name="sites_description">Site adı veya IP/CIDR yaz. IP adreslerini Switchyard bağlanırken kendisi bulur (DoH + sistem DNS). Değişiklikler tünel yeniden bağlanınca geçerli olur.</string>
+    <string name="sites_description">Site adı veya IP/CIDR yaz. IP adreslerini Janus bağlanırken kendisi bulur (DoH + sistem DNS). Değişiklikler tünel yeniden bağlanınca geçerli olur.</string>
     <string name="sites_api_warning">Bu özellik Android 13 ve üstünü gerektirir. Bu cihazda site listesi uygulanmaz.</string>
     <string name="sites_input_hint">ornek.com veya 1.2.3.0/24</string>
     <string name="sites_add">Ekle</string>

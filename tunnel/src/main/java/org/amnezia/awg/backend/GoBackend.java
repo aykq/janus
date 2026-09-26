@@ -74,7 +74,7 @@ public final class GoBackend implements Backend {
      * @param cb Callback to be invoked
      */
     /**
-     * Set a provider for routes that bypass the tunnel (Switchyard site-based split tunneling).
+     * Set a provider for routes that bypass the tunnel (Janus site-based split tunneling).
      * Only applied on API 33+ and only when the tunnel carries the default route.
      */
     public static void setExcludedRoutesProvider(@Nullable final ExcludedRoutesProvider provider) {

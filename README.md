@@ -1,7 +1,7 @@
-# Switchyard
+# Janus
 
-Adı demiryolundaki makas sahasından (switchyard): trenler orada farklı raylara ayrılır,
-Switchyard da trafiği VPN ile doğrudan bağlantı arasında ayırır.
+Adı Roma'nın kapılar ve geçitler tanrısı Janus'tan: iki yüzü iki yöne bakar, uygulama da
+trafiği VPN ile doğrudan bağlantı arasında ayırır.
 
 Kişisel Android VPN istemcisi. [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android)
 (Apache-2.0) forku; orijinal README: [README.upstream.md](README.upstream.md).
@@ -34,16 +34,16 @@ uygulamasına ihtiyaç duymadan:
 | `ui/.../split/PrivateDns.kt` | Alttaki ağın Private DNS hostname'ini bulur |
 | `ui/.../activity/SitesActivity.kt` + `activity_sites.xml` | Siteler ekranı |
 | `ui/.../fragment/TunnelEditorFragment.kt` | DPI preset menüsü |
-| `ui/src/main/res/values/strings_switchyard.xml` | Türkçe metinler |
+| `ui/src/main/res/values/strings_janus.xml` | Türkçe metinler |
 
 Kod namespace'i `org.amnezia.awg` olarak kaldı (upstream'den güncelleme çekmek kolay olsun);
-applicationId `tr.aykq.switchyard`, yani Amnezia uygulamalarıyla yan yana kurulur.
+applicationId `tr.aykq.janus`, yani Amnezia uygulamalarıyla yan yana kurulur.
 
 ## Derleme
 
 ```
 git clone --recurse-submodules <repo>
-cd switchyard
+cd janus
 ./gradlew assembleDebug        # ui/build/outputs/apk/debug/ui-debug.apk
 ```
 

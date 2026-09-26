@@ -19,10 +19,10 @@ android {
     }
     namespace = pkg
     defaultConfig {
-        applicationId = providers.gradleProperty("switchyardApplicationId").get()
+        applicationId = providers.gradleProperty("janusApplicationId").get()
         targetSdk = 36
-        versionCode = providers.gradleProperty("switchyardVersionCode").get().toInt()
-        versionName = providers.gradleProperty("switchyardVersionName").get()
+        versionCode = providers.gradleProperty("janusVersionCode").get().toInt()
+        versionName = providers.gradleProperty("janusVersionName").get()
         buildConfigField("int", "MIN_SDK_VERSION", minSdk.toString())
     }
     compileOptions {
