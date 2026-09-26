@@ -9,8 +9,8 @@ Kişisel Android VPN istemcisi. [amneziawg-android](https://github.com/amnezia-v
 Hedef: Proton'un (veya herhangi bir sağlayıcının) WireGuard config'iyle, Amnezia VPN
 uygulamasına ihtiyaç duymadan:
 
-- **Uygulama bazlı split tunnel**: upstream'den gelir (tünel editörü → Excluded applications).
 - **Split tunnel**: ana ekrandaki karttan; uygulama ve site listeleri global, her biri için 'VPN dışında tut' veya 'Sadece bunlar VPN'den' modu.
+- **Dil**: arayüz varsayılan İngilizce; menü → Language ile Türkçe seçilebilir.
 - **Private DNS bypass** (varsayılan kapalı, son çare): VPN açıkken "Private DNS sunucusuna
   erişilemiyor" hatasının kök nedeni çözülemezse. Private DNS hostname'i çözülür, IP'leri tünel
   dışına alınır; sorgular DoT ile şifreli kalır ama VPN IP'si yerine gerçek IP'den gider.

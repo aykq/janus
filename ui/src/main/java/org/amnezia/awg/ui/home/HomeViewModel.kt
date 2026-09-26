@@ -34,6 +34,7 @@ data class HomeState(
     val dpiJunkCount: Int? = null,
     val nowMillis: Long = 0,
     val error: String? = null,
+    val busy: Boolean = false,
 )
 
 class HomeViewModel : ViewModel() {
@@ -76,6 +77,7 @@ class HomeViewModel : ViewModel() {
                     txBytes = stats?.totalTx() ?: 0,
                     dpiJunkCount = junk,
                     nowMillis = System.currentTimeMillis(),
+                    busy = busy,
                 )
             }
         }

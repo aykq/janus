@@ -19,10 +19,10 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.databinding.Observable
 import androidx.databinding.Observable.OnPropertyChangedCallback
-import org.amnezia.awg.activity.MainActivity
 import org.amnezia.awg.activity.TunnelToggleActivity
 import org.amnezia.awg.backend.Tunnel
 import org.amnezia.awg.model.ObservableTunnel
+import org.amnezia.awg.ui.home.HomeActivity
 import org.amnezia.awg.util.applicationScope
 import org.amnezia.awg.widget.SlashDrawable
 import kotlinx.coroutines.launch
@@ -54,7 +54,7 @@ class QuickTileService : TileService() {
     override fun onClick() {
         when (val tunnel = tunnel) {
             null -> {
-                val intent = Intent(this, MainActivity::class.java)
+                val intent = Intent(this, HomeActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     startActivityAndCollapse(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE))

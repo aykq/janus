@@ -202,7 +202,7 @@ fun HomeScreen(
                 return@Column
             }
             Spacer(Modifier.height(24.dp))
-            ConnectButton(state.connection, onToggle)
+            ConnectButton(state.connection, state.busy, onToggle)
             StatusText(state)
             TunnelPicker(state, onSelect)
             SplitCard(state.split, onOpenSplit)
@@ -214,7 +214,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ConnectButton(connection: Connection, onToggle: () -> Unit) {
+private fun ConnectButton(connection: Connection, busy: Boolean, onToggle: () -> Unit) {
     val color by animateColorAsState(
         when (connection) {
             Connection.OFF -> MaterialTheme.colorScheme.surfaceVariant
@@ -231,7 +231,7 @@ private fun ConnectButton(connection: Connection, onToggle: () -> Unit) {
     val description = stringResource(R.string.home_toggle_description)
     Surface(
         onClick = onToggle,
-        enabled = connection != Connection.CONNECTING,
+        enabled = !busy,
         shape = CircleShape,
         color = color,
         shadowElevation = 6.dp,

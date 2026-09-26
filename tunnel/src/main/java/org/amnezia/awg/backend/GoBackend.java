@@ -68,19 +68,18 @@ public final class GoBackend implements Backend {
     }
 
     /**
-     * Set a {@link AlwaysOnCallback} to be invoked when {@link VpnService} is started by the
-     * system's Always-On VPN mode.
-     *
-     * @param cb Callback to be invoked
-     */
-    /**
-     * Set a provider for routes that bypass the tunnel (Janus site-based split tunneling).
-     * Only applied on API 33+ and only when the tunnel carries the default route.
+     * Sets the provider of the split tunnel plan (apps and routes) applied when a tunnel comes up.
      */
     public static void setSplitTunnelProvider(@Nullable final SplitTunnelProvider provider) {
         splitTunnelProvider = provider;
     }
 
+    /**
+     * Set a {@link AlwaysOnCallback} to be invoked when {@link VpnService} is started by the
+     * system's Always-On VPN mode.
+     *
+     * @param cb Callback to be invoked
+     */
     public static void setAlwaysOnCallback(final AlwaysOnCallback cb) {
         alwaysOnCallback = cb;
     }
