@@ -84,4 +84,17 @@
     <string name="update_action_install">Download and install</string>
     <string name="update_action_open_pr">Open PR</string>
     <string name="update_error_title">Janus update failed</string>
+
+    <string name="update_install_title">Janus update</string>
+    <string name="update_install_downloading">Downloading… %d%%</string>
+    <string name="update_install_verifying">Verifying…</string>
+    <string name="update_install_waiting">Confirm the installation in the system dialog.</string>
+    <string name="update_install_permission">Allow Janus to install updates, then come back.</string>
+    <string name="update_install_open_settings">Open settings</string>
+    <string name="update_install_retry">Retry</string>
+    <string name="update_install_close">Close</string>
+    <string name="update_error_checksum">Downloaded file did not match its checksum and was deleted.</string>
+    <string name="update_error_download">Download failed: %s</string>
+    <string name="update_error_signature">Signature mismatch: this build was not signed with the Janus key.</string>
+    <string name="update_error_install">Installation failed: %s</string>
 </resources>

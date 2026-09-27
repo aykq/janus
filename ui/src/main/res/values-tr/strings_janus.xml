@@ -78,4 +78,17 @@
     <string name="update_action_install">İndir ve kur</string>
     <string name="update_action_open_pr">PR\'ı aç</string>
     <string name="update_error_title">Janus güncellemesi başarısız</string>
+
+    <string name="update_install_title">Janus güncellemesi</string>
+    <string name="update_install_downloading">İndiriliyor… %%%d</string>
+    <string name="update_install_verifying">Doğrulanıyor…</string>
+    <string name="update_install_waiting">Kurulumu sistem penceresinde onayla.</string>
+    <string name="update_install_permission">Janus\'un güncelleme kurmasına izin ver, sonra geri dön.</string>
+    <string name="update_install_open_settings">Ayarları aç</string>
+    <string name="update_install_retry">Tekrar dene</string>
+    <string name="update_install_close">Kapat</string>
+    <string name="update_error_checksum">İndirilen dosyanın özeti tutmadı, dosya silindi.</string>
+    <string name="update_error_download">İndirme başarısız: %s</string>
+    <string name="update_error_signature">İmza uyuşmuyor: bu derleme Janus anahtarıyla imzalanmamış.</string>
+    <string name="update_error_install">Kurulum başarısız: %s</string>
 </resources>
