@@ -27,6 +27,7 @@ desugarJdkLibs = "com.android.tools:desugar_jdk_libs:2.0.4"
 google-material = "com.google.android.material:material:1.11.0"
 jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 junit = "junit:junit:4.13.2"
+json = "org.json:json:20250517"
 kotlinx-coroutines-android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 zxing-android-embedded = "com.journeyapps:zxing-android-embedded:4.3.0"
 
