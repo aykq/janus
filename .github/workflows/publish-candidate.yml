@@ -31,14 +31,14 @@ jobs:
         set -euo pipefail
         skip() { echo "Skipping: $1"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
         [[ "$HEAD_REPO" == "$REPO" ]] || skip "fork"
-        PR_JSON="$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$HEAD_BRANCH" --jq '.[0] // empty')"
+        PR_JSON="$(gh api -X GET "repos/$REPO/pulls" -f state=open -f head="${REPO%%/*}:$HEAD_BRANCH" --jq '.[0] // empty')"
         [[ -n "$PR_JSON" ]] || skip "no open PR for $HEAD_BRANCH"
         AUTHOR="$(jq -r .user.login <<<"$PR_JSON")"
         [[ "$AUTHOR" == "dependabot[bot]" || "$HEAD_BRANCH" == "upstream-sync" ]] || skip "untrusted source"
         [[ "$(jq -r .head.sha <<<"$PR_JSON")" == "$HEAD_SHA" ]] || skip "stale build"
         echo "number=$(jq -r .number <<<"$PR_JSON")" >> "$GITHUB_OUTPUT"
         echo "url=$(jq -r .html_url <<<"$PR_JSON")" >> "$GITHUB_OUTPUT"
-        jq -r .title <<<"$PR_JSON" | tr -d '\r\n' | sed 's/-->/->/g' > "$RUNNER_TEMP/pr_title.txt"
+        jq -r .title <<<"$PR_JSON" | tr -d '\r\n' | sed 's/--*>/->/g' > "$RUNNER_TEMP/pr_title.txt"
 
     - name: Download APK
       if: ${{ steps.pr.outputs.skip != 'true' }}
@@ -67,6 +67,7 @@ jobs:
         HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
         set -euo pipefail
+        if [[ -z "${DEBUG_KEYSTORE_B64}" ]]; then echo "Missing secret JANUS_DEBUG_KEYSTORE_B64" >&2; exit 1; fi
         echo "$DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/janus-debug.keystore"
         APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
         OUT="janus-${CODE}-pr${NUMBER}.apk"
@@ -86,5 +87,7 @@ jobs:
           echo "url: ${URL}"
           echo "-->"
         } > notes.md
+        STATE="$(gh api "repos/$GITHUB_REPOSITORY/pulls/${NUMBER}" --jq '.state + " " + .head.sha')"
+        if [[ "$STATE" != "open ${HEAD_SHA}" ]]; then echo "PR ${NUMBER} changed during build, skipping"; exit 0; fi
         gh release delete "pr-${NUMBER}" --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
         gh release create "pr-${NUMBER}" "$OUT" --prerelease --target "$HEAD_SHA" --title "Candidate #${NUMBER} (${CODE})" --notes-file notes.md -R "$GITHUB_REPOSITORY"

@@ -24,6 +24,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'build-main' }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: "Build (${{ inputs.target || 'debug_apk' }})"
