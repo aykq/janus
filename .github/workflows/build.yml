@@ -4,6 +4,8 @@ run-name: "Android • ${{ inputs.target || 'debug_apk' }} • ${{ inputs.ref ||
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
     inputs:
       target:
@@ -19,10 +21,15 @@ on:
         required: false
         default: "master"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: "Build (${{ inputs.target || 'debug_apk' }})"
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout
@@ -59,12 +66,14 @@ jobs:
             echo "kind=aab" >> "$GITHUB_OUTPUT"
             echo "artifact_name=release-aab" >> "$GITHUB_OUTPUT"
             echo "needs_signing=true" >> "$GITHUB_OUTPUT"
+            echo "extra_args=" >> "$GITHUB_OUTPUT"
             ;;
           debug_apk)
             echo "gradle_task=assembleDebug" >> "$GITHUB_OUTPUT"
             echo "kind=apk" >> "$GITHUB_OUTPUT"
             echo "artifact_name=debug-apk" >> "$GITHUB_OUTPUT"
             echo "needs_signing=false" >> "$GITHUB_OUTPUT"
+            echo "extra_args=-PjanusBuildNumber=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
             ;;
           *)
             echo "Unknown target: ${{ inputs.target || 'debug_apk' }}" >&2
@@ -87,6 +96,7 @@ jobs:
         echo "KEYSTORE_PATH=${PWD}/release.keystore.jks" >> "$GITHUB_ENV"
 
     - name: Install fixed debug keystore
+      if: ${{ github.event_name != 'pull_request' }}
       shell: bash
       env:
         DEBUG_KEYSTORE_B64: ${{ secrets.JANUS_DEBUG_KEYSTORE_B64 }}
@@ -105,7 +115,7 @@ jobs:
       run: |
         set -euo pipefail
         chmod +x ./gradlew
-        ./gradlew --no-daemon --stacktrace :ui:testDebugUnitTest ${{ steps.cfg.outputs.gradle_task }}
+        ./gradlew --no-daemon --stacktrace ${{ steps.cfg.outputs.extra_args }} :ui:testDebugUnitTest ${{ steps.cfg.outputs.gradle_task }}
 
     - name: Locate built artifact
       id: locate
@@ -159,3 +169,27 @@ jobs:
         name: ${{ steps.cfg.outputs.artifact_name }}
         path: ${{ steps.sign.outputs.final_file || steps.locate.outputs.built_file }}
         if-no-files-found: error
+
+    - name: Publish stable release
+      if: ${{ steps.cfg.outputs.kind == 'apk' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.ref == 'master')) }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        CODE="${{ github.run_number }}"
+        SHA="$(git rev-parse HEAD)"
+        APK="janus-${CODE}-stable.apk"
+        cp ./ui/build/outputs/apk/debug/ui-debug.apk "$APK"
+        SUM="$(sha256sum "$APK" | cut -d' ' -f1)"
+        {
+          echo "Latest debug build from master (${SHA})."
+          echo
+          echo "<!-- janus-update"
+          echo "versionCode: ${CODE}"
+          echo "sha256: ${SUM}"
+          echo "channel: stable"
+          echo "-->"
+        } > notes.md
+        gh release delete debug-latest --cleanup-tag --yes || true
+        gh release create debug-latest "$APK" --target "$SHA" --title "Latest debug build (${CODE})" --notes-file notes.md
