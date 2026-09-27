@@ -45,6 +45,7 @@ object TokenStore {
 
     suspend fun isSet(): Boolean = Application.getPreferencesDataStore().data.first()[ENCRYPTED] != null
 
+    @Synchronized
     private fun key(): SecretKey {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
@@ -66,6 +67,7 @@ object TokenStore {
 
     private fun decrypt(stored: String): String {
         val bytes = Base64.decode(stored, Base64.NO_WRAP)
+        require(bytes.size > IV_LENGTH) { "Stored token is corrupted" }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, IV_LENGTH))
         return String(cipher.doFinal(bytes, IV_LENGTH, bytes.size - IV_LENGTH))
