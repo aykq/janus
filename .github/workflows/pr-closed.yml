@@ -1,0 +1,26 @@
+name: Candidate cleanup
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  cleanup:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.user.login == 'dependabot[bot]' || github.event.pull_request.head.ref == 'upstream-sync')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Delete candidate release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release delete "pr-${{ github.event.pull_request.number }}" --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
+    - name: Rebuild master so devices can roll back
+      if: ${{ github.event.pull_request.merged == false }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref master -f target=debug_apk -f ref=master

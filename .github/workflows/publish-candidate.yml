@@ -1,0 +1,90 @@
+name: Publish candidate
+
+on:
+  workflow_run:
+    workflows: ["Android build (signed AAB / debug APK)"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'pull_request' ||
+       (github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_branch == 'upstream-sync'))
+    runs-on: ubuntu-latest
+    steps:
+    - name: Resolve pull request
+      id: pr
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+        HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      run: |
+        set -euo pipefail
+        skip() { echo "Skipping: $1"; echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0; }
+        [[ "$HEAD_REPO" == "$REPO" ]] || skip "fork"
+        PR_JSON="$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$HEAD_BRANCH" --jq '.[0] // empty')"
+        [[ -n "$PR_JSON" ]] || skip "no open PR for $HEAD_BRANCH"
+        AUTHOR="$(jq -r .user.login <<<"$PR_JSON")"
+        [[ "$AUTHOR" == "dependabot[bot]" || "$HEAD_BRANCH" == "upstream-sync" ]] || skip "untrusted source"
+        [[ "$(jq -r .head.sha <<<"$PR_JSON")" == "$HEAD_SHA" ]] || skip "stale build"
+        echo "number=$(jq -r .number <<<"$PR_JSON")" >> "$GITHUB_OUTPUT"
+        echo "url=$(jq -r .html_url <<<"$PR_JSON")" >> "$GITHUB_OUTPUT"
+        jq -r .title <<<"$PR_JSON" | tr -d '\r\n' | sed 's/-->/->/g' > "$RUNNER_TEMP/pr_title.txt"
+
+    - name: Download APK
+      if: ${{ steps.pr.outputs.skip != 'true' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: debug-apk
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ github.token }}
+        path: in
+
+    - name: Set up Android SDK
+      if: ${{ steps.pr.outputs.skip != 'true' }}
+      uses: android-actions/setup-android@v3
+      with:
+        packages: "build-tools;36.0.0"
+
+    - name: Sign and publish
+      if: ${{ steps.pr.outputs.skip != 'true' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        DEBUG_KEYSTORE_B64: ${{ secrets.JANUS_DEBUG_KEYSTORE_B64 }}
+        NUMBER: ${{ steps.pr.outputs.number }}
+        URL: ${{ steps.pr.outputs.url }}
+        CODE: ${{ github.event.workflow_run.run_number }}
+        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        set -euo pipefail
+        echo "$DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/janus-debug.keystore"
+        APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+        OUT="janus-${CODE}-pr${NUMBER}.apk"
+        "$APKSIGNER" sign --ks "$RUNNER_TEMP/janus-debug.keystore" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey --out "$OUT" in/ui-debug.apk
+        "$APKSIGNER" verify "$OUT"
+        SUM="$(sha256sum "$OUT" | cut -d' ' -f1)"
+        TITLE="$(cat "$RUNNER_TEMP/pr_title.txt")"
+        {
+          echo "Candidate build for #${NUMBER}: ${TITLE}"
+          echo
+          echo "<!-- janus-update"
+          echo "versionCode: ${CODE}"
+          echo "sha256: ${SUM}"
+          echo "channel: candidate"
+          echo "pr: ${NUMBER}"
+          echo "title: ${TITLE}"
+          echo "url: ${URL}"
+          echo "-->"
+        } > notes.md
+        gh release delete "pr-${NUMBER}" --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
+        gh release create "pr-${NUMBER}" "$OUT" --prerelease --target "$HEAD_SHA" --title "Candidate #${NUMBER} (${CODE})" --notes-file notes.md -R "$GITHUB_REPOSITORY"
