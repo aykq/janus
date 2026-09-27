@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val pkg: String = providers.gradleProperty("amneziawgPackageName").get()
+val ciBuildNumber: Int? = providers.gradleProperty("janusBuildNumber").orNull?.toInt()
 
 plugins {
     alias(libs.plugins.android.application)
@@ -23,7 +24,7 @@ android {
     defaultConfig {
         applicationId = providers.gradleProperty("janusApplicationId").get()
         targetSdk = 36
-        versionCode = providers.gradleProperty("janusVersionCode").get().toInt()
+        versionCode = ciBuildNumber ?: providers.gradleProperty("janusVersionCode").get().toInt()
         versionName = providers.gradleProperty("janusVersionName").get()
         buildConfigField("int", "MIN_SDK_VERSION", minSdk.toString())
     }
@@ -52,7 +53,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+            versionNameSuffix = "-debug" + (ciBuildNumber?.let { "+$it" } ?: "")
         }
         create("googleplay") {
             initWith(getByName("release"))
