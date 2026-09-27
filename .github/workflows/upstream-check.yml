@@ -1,0 +1,67 @@
+name: Upstream check
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: master
+        fetch-depth: 0
+
+    - name: Merge upstream into upstream-sync
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git remote add upstream https://github.com/amnezia-vpn/amneziawg-android.git
+        git fetch upstream master
+        BEHIND="$(git rev-list --count HEAD..upstream/master)"
+        if [[ "$BEHIND" == "0" ]]; then
+          echo "Up to date with upstream."
+          exit 0
+        fi
+        UPSTREAM_HEAD="$(git rev-parse --short upstream/master)"
+        open_issue() {
+          local reason="$1"
+          local existing
+          existing="$(gh issue list --state open --search "Upstream merge needs manual resolution in:title" --json number --jq '.[0].number // empty')"
+          if [[ -z "$existing" ]]; then
+            gh issue create --title "Upstream merge needs manual resolution" \
+              --body "$(printf 'Upstream is %s commits ahead (head %s).\n\n%s' "$BEHIND" "$UPSTREAM_HEAD" "$reason")"
+          fi
+        }
+        git checkout -B upstream-sync
+        if ! git merge --no-edit upstream/master; then
+          CONFLICTS="$(git diff --name-only --diff-filter=U | sed 's/^/- /')"
+          git merge --abort
+          open_issue "$(printf 'Conflicting files:\n%s' "$CONFLICTS")"
+          exit 0
+        fi
+        # GITHUB_TOKEN cannot push workflow file changes, so those merges need a human.
+        if ! git diff --quiet master HEAD -- .github/workflows; then
+          open_issue "Upstream changes files under .github/workflows."
+          exit 0
+        fi
+        git push -f origin upstream-sync
+        EXISTING="$(gh pr list --head upstream-sync --state open --json number --jq '.[0].number // empty')"
+        if [[ -z "$EXISTING" ]]; then
+          gh pr create --base master --head upstream-sync \
+            --title "Merge upstream amneziawg-android (${BEHIND} commits)" \
+            --body "Automated weekly upstream sync. Upstream head: ${UPSTREAM_HEAD}."
+        fi
+        gh workflow run build.yml --ref upstream-sync -f target=debug_apk -f ref=upstream-sync
