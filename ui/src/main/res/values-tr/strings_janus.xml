@@ -70,4 +70,12 @@
     <string name="home_error_prepare">VPN izni alınamadı: %s</string>
     <string name="home_language">Dil</string>
     <string name="language_system">Sistem varsayılanı</string>
+
+    <string name="update_channel_name">Güncellemeler</string>
+    <string name="update_notification_stable">Janus güncellemesi hazır (derleme %d)</string>
+    <string name="update_notification_candidate">Aday sürüm #%d</string>
+    <string name="update_notification_text">İndirip kurmak için dokun.</string>
+    <string name="update_action_install">İndir ve kur</string>
+    <string name="update_action_open_pr">PR\'ı aç</string>
+    <string name="update_error_title">Janus güncellemesi başarısız</string>
 </resources>

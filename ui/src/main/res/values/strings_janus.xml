@@ -76,4 +76,12 @@
     <string name="split_private_dns_bypass">Keep Private DNS outside the tunnel</string>
     <string name="split_private_dns_description">Turn on only if you get \"Private DNS server cannot be accessed\" while the VPN is on. Queries stay encrypted but leave from your real IP.</string>
     <string name="split_open_settings">Split tunnel settings</string>
+
+    <string name="update_channel_name">Updates</string>
+    <string name="update_notification_stable">Janus update available (build %d)</string>
+    <string name="update_notification_candidate">Candidate build #%d</string>
+    <string name="update_notification_text">Tap to download and install.</string>
+    <string name="update_action_install">Download and install</string>
+    <string name="update_action_open_pr">Open PR</string>
+    <string name="update_error_title">Janus update failed</string>
 </resources>

@@ -28,6 +28,7 @@ import org.amnezia.awg.util.RootShell
 import org.amnezia.awg.util.ToolsInstaller
 import org.amnezia.awg.util.UserKnobs
 import org.amnezia.awg.split.SplitRouteProvider
+import org.amnezia.awg.update.UpdateScheduler
 import org.amnezia.awg.util.applicationScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -134,6 +135,8 @@ class Application : android.app.Application() {
             StrictMode.setVmPolicy(VmPolicy.Builder().detectAll().penaltyLog().build())
             StrictMode.setThreadPolicy(ThreadPolicy.Builder().detectAll().penaltyLog().build())
         }
+
+        UpdateScheduler.onAppStart(applicationContext)
     }
 
     override fun onTerminate() {
