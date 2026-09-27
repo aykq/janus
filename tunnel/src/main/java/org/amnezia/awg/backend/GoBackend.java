@@ -51,6 +51,9 @@ public final class GoBackend implements Backend {
     @Nullable private static SplitTunnelProvider splitTunnelProvider;
     private static volatile GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
     private static final long SERVICE_STOP_TIMEOUT_MS = 2000;
+    private static final long HANDSHAKE_WATCHDOG_MS = 6000;
+    private static final int HANDSHAKE_WATCHDOG_MAX_RETRIES = 2;
+    private volatile int watchdogRetries;
     private final Context context;
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
@@ -230,6 +233,9 @@ public final class GoBackend implements Backend {
     private void launchStatusJob() {
         stopStatusJob();
         Log.d(TAG, "Launch status job");
+        final Tunnel watchedTunnel = currentTunnel;
+        final int watchedHandle = currentTunnelHandle;
+        final long startedAt = System.currentTimeMillis();
         statusThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 final long lastHandshake = getLastHandshake(currentTunnel);
@@ -242,6 +248,11 @@ public final class GoBackend implements Backend {
 
                 // 0 means no handshake yet, wait and retry
                 if (lastHandshake == 0L) {
+                    if (System.currentTimeMillis() - startedAt >= HANDSHAKE_WATCHDOG_MS
+                            && watchdogRetries < HANDSHAKE_WATCHDOG_MAX_RETRIES) {
+                        reconnectAfterStalledHandshake(watchedTunnel, watchedHandle);
+                        break;
+                    }
                     try {
                         Thread.sleep(1000);
                     } catch (final InterruptedException e) {
@@ -272,6 +283,26 @@ public final class GoBackend implements Backend {
             statusThread = null;
         }, "StatusJob");
         statusThread.start();
+    }
+
+    // Must not run on the status thread: DOWN interrupts it and the service-stop wait would throw.
+    private void reconnectAfterStalledHandshake(final Tunnel tunnel, final int handle) {
+        new Thread(() -> {
+            synchronized (this) {
+                if (tunnel != currentTunnel || handle != currentTunnelHandle || currentConfig == null)
+                    return;
+                final Config config = currentConfig;
+                ++watchdogRetries;
+                Log.w(TAG, "No handshake within " + HANDSHAKE_WATCHDOG_MS + " ms, reconnecting (attempt "
+                        + watchdogRetries + '/' + HANDSHAKE_WATCHDOG_MAX_RETRIES + ')');
+                try {
+                    setStateInternal(tunnel, null, State.DOWN);
+                    setStateInternal(tunnel, config, State.UP);
+                } catch (final Exception e) {
+                    Log.e(TAG, "Watchdog reconnect failed", e);
+                }
+            }
+        }, "HandshakeWatchdog").start();
     }
 
     /**
@@ -305,7 +336,8 @@ public final class GoBackend implements Backend {
      * @throws Exception Exception raised while changing tunnel state.
      */
     @Override
-    public State setState(final Tunnel tunnel, State state, @Nullable final Config config) throws Exception {
+    public synchronized State setState(final Tunnel tunnel, State state, @Nullable final Config config) throws Exception {
+        watchdogRetries = 0;
         final State originalState = getState(tunnel);
 
         if (state == State.TOGGLE)
