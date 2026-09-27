@@ -36,17 +36,23 @@ object UpdateInstaller {
             file
         }
 
-    fun install(context: Context, apk: File) {
+    suspend fun install(context: Context, apk: File) = withContext(Dispatchers.IO) {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
         params.setAppPackageName(context.packageName)
         val sessionId = installer.createSession(params)
-        installer.openSession(sessionId).use { session ->
-            apk.inputStream().use { input ->
-                session.openWrite("janus.apk", 0, apk.length()).use { output ->
-                    input.copyTo(output)
-                    session.fsync(output)
+        val session = installer.openSession(sessionId)
+        session.use {
+            try {
+                apk.inputStream().use { input ->
+                    session.openWrite("janus.apk", 0, apk.length()).use { output ->
+                        input.copyTo(output)
+                        session.fsync(output)
+                    }
                 }
+            } catch (e: Exception) {
+                session.abandon()
+                throw e
             }
             // The installer fills in status extras, so the PendingIntent must stay mutable on S+.
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or

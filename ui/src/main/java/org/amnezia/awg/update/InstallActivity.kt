@@ -32,10 +32,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.withContext
 import org.amnezia.awg.R
 import org.amnezia.awg.ui.theme.JanusTheme
+import java.io.File
 import java.io.IOException
 
 class InstallActivity : AppCompatActivity() {
@@ -52,15 +59,41 @@ class InstallActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { JanusTheme { Screen() } }
-        if (savedInstanceState == null) start()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                InstallEvents.latest.collect { if (it != null) consumeLatestEvent() }
+            }
+        }
+        start()
     }
 
     override fun onResume() {
         super.onResume()
+        InstallEvents.activityVisible = true
+        consumeLatestEvent()
         if (state == State.NeedsPermission && canInstall()) start()
     }
 
+    override fun onPause() {
+        super.onPause()
+        InstallEvents.activityVisible = false
+    }
+
+    private fun consumeLatestEvent() {
+        when (val event = InstallEvents.latest.getAndUpdate { null }) {
+            is InstallEvent.NeedsConfirmation -> startActivity(event.confirm)
+            is InstallEvent.Failed -> state = State.Error(event.message)
+            InstallEvent.Cancelled -> finish()
+            null -> Unit
+        }
+    }
+
     private fun canInstall() = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()
+
+    private suspend fun failWith(message: String) {
+        withContext(Dispatchers.IO) { File(cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively() }
+        state = State.Error(message)
+    }
 
     private fun start() {
         if (!canInstall()) {
@@ -74,22 +107,38 @@ class InstallActivity : AppCompatActivity() {
             finish()
             return
         }
+        InstallEvents.latest.value = null
         state = State.Downloading(0f)
         lifecycleScope.launch {
+            var lastPercent = -1
             try {
                 val apk = UpdateInstaller.download(this@InstallActivity, versionCode, assetUrl, sha256) { p ->
-                    runOnUiThread { state = if (p >= 1f) State.Verifying else State.Downloading(p) }
+                    val percent = (p * 100).toInt()
+                    if (percent != lastPercent) {
+                        lastPercent = percent
+                        runOnUiThread { state = if (p >= 1f) State.Verifying else State.Downloading(p) }
+                    }
                 }
                 state = State.Waiting
-                UpdateInstaller.install(this@InstallActivity, apk)
+                try {
+                    UpdateInstaller.install(this@InstallActivity, apk)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    failWith(getString(R.string.update_error_install, e.message ?: e.javaClass.simpleName))
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: UpdateInstaller.ChecksumMismatch) {
-                state = State.Error(getString(R.string.update_error_checksum))
+                failWith(getString(R.string.update_error_checksum))
             } catch (e: GitHubClient.HttpError) {
-                state = State.Error(getString(R.string.update_error_download, "HTTP ${e.code}"))
+                failWith(getString(R.string.update_error_download, "HTTP ${e.code}"))
             } catch (e: IOException) {
-                state = State.Error(getString(R.string.update_error_download, e.message ?: e.javaClass.simpleName))
+                failWith(getString(R.string.update_error_download, e.message ?: e.javaClass.simpleName))
             } catch (e: IllegalArgumentException) {
-                state = State.Error(getString(R.string.update_error_download, e.message ?: "invalid URL"))
+                failWith(getString(R.string.update_error_download, e.message ?: "invalid URL"))
+            } catch (e: Exception) {
+                failWith(getString(R.string.update_error_download, e.message ?: e.javaClass.simpleName))
             }
         }
     }

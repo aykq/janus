@@ -19,6 +19,7 @@ object UpdateNotifier {
     private const val CHANNEL_ID = "updates"
     private const val AVAILABLE_ID = 0x4a55
     private const val ERROR_ID = 0x4a56
+    private const val CONFIRM_ID = 0x4a57
 
     private fun ensureChannel(context: Context) {
         NotificationManagerCompat.from(context).createNotificationChannel(
@@ -57,6 +58,27 @@ object UpdateNotifier {
         }
         manager.notify(AVAILABLE_ID, builder.build())
         return true
+    }
+
+    @SuppressLint("MissingPermission")
+    fun notifyConfirm(context: Context, confirm: Intent) {
+        val manager = NotificationManagerCompat.from(context)
+        if (!manager.areNotificationsEnabled()) return
+        ensureChannel(context)
+        val open = PendingIntent.getActivity(
+            context, CONFIRM_ID, confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        manager.notify(
+            CONFIRM_ID,
+            NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_tile)
+                .setContentTitle(context.getString(R.string.update_install_title))
+                .setContentText(context.getString(R.string.update_install_confirm_notification))
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build()
+        )
     }
 
     @SuppressLint("MissingPermission")

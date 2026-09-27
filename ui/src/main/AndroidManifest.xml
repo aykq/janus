@@ -159,6 +159,7 @@
         <activity
             android:name=".update.InstallActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <receiver

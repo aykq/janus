@@ -17,19 +17,31 @@ class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                val confirm = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java) ?: return
-                context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                val confirm = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java)
+                if (confirm == null) {
+                    File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively()
+                    InstallEvents.latest.value = InstallEvent.Failed(context.getString(R.string.update_error_install, "missing confirmation intent"))
+                    if (!InstallEvents.activityVisible) UpdateNotifier.notifyError(context, context.getString(R.string.update_error_install, "missing confirmation intent"))
+                    return
+                }
+                InstallEvents.latest.value = InstallEvent.NeedsConfirmation(confirm)
+                if (!InstallEvents.activityVisible) UpdateNotifier.notifyConfirm(context, confirm)
             }
-            PackageInstaller.STATUS_SUCCESS, PackageInstaller.STATUS_FAILURE_ABORTED -> {
+            PackageInstaller.STATUS_SUCCESS -> {
                 File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively()
+            }
+            PackageInstaller.STATUS_FAILURE_ABORTED -> {
+                File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively()
+                InstallEvents.latest.value = InstallEvent.Cancelled
             }
             else -> {
                 File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively()
-                val message = if (status == PackageInstaller.STATUS_FAILURE_CONFLICT || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE)
+                val message = if (status == PackageInstaller.STATUS_FAILURE_CONFLICT)
                     context.getString(R.string.update_error_signature)
                 else
                     context.getString(R.string.update_error_install, intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "status $status")
-                UpdateNotifier.notifyError(context, message)
+                InstallEvents.latest.value = InstallEvent.Failed(message)
+                if (!InstallEvents.activityVisible) UpdateNotifier.notifyError(context, message)
             }
         }
     }

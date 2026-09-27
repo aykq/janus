@@ -91,4 +91,5 @@
     <string name="update_error_download">İndirme başarısız: %s</string>
     <string name="update_error_signature">İmza uyuşmuyor: bu derleme Janus anahtarıyla imzalanmamış.</string>
     <string name="update_error_install">Kurulum başarısız: %s</string>
+    <string name="update_install_confirm_notification">Janus güncellemesini onaylamak için dokun.</string>
 </resources>
