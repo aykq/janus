@@ -8,11 +8,17 @@ package org.amnezia.awg.update
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 
 class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result =
+    override suspend fun doWork(): Result = try {
         when (UpdateChecker.check(applicationContext, notify = true, force = false)) {
             CheckStatus.NoConnection -> Result.retry()
             else -> Result.success()
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        Result.retry()
+    }
 }

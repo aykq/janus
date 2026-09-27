@@ -13,7 +13,7 @@ import java.io.IOException
 
 object UpdateChecker {
     suspend fun check(context: Context, notify: Boolean, force: Boolean): CheckStatus = withContext(Dispatchers.IO) {
-        val token = TokenStore.get()
+        val token = runCatching { TokenStore.get() }.getOrNull()
         val status = try {
             val releases = ReleaseParser.parse(GitHubClient(token).fetchReleases())
             val newest = UpdatePolicy.newest(releases, installedVersionCode(context), UpdateState.candidatesEnabled())

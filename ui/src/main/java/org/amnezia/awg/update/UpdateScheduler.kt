@@ -13,12 +13,15 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.io.File
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object UpdateScheduler {
     private const val WORK_NAME = "janus-update-check"
 
     fun onAppStart(context: Context) {
-        File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively()
+        CoroutineScope(Dispatchers.IO).launch { File(context.cacheDir, UpdateInstaller.CACHE_DIR).deleteRecursively() }
         val request = PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.DAYS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
