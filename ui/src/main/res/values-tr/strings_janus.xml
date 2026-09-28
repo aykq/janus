@@ -96,8 +96,8 @@
     <string name="update_category">Güncellemeler</string>
     <string name="update_token_title">GitHub token</string>
     <string name="update_token_summary_set">Ayarlı</string>
-    <string name="update_token_summary_unset">Ayarlı değil (repo private olduğu sürece gerekli)</string>
-    <string name="update_token_message">Yalnız aykq/janus\'u okuyabilen fine-grained token. Repo public olunca boş bırak.</string>
+    <string name="update_token_summary_unset">Ayarlı değil (isteğe bağlı)</string>
+    <string name="update_token_message">İsteğe bağlı. Salt okunur bir fine-grained token yalnızca güncelleme kontrolündeki GitHub istek sınırını yükseltir.</string>
     <string name="update_token_hint">github_pat_…</string>
     <string name="update_token_save">Kaydet</string>
     <string name="update_token_clear">Temizle</string>
@@ -111,7 +111,7 @@
     <string name="update_status_available">Derleme %s hazır, kurmak için dokun</string>
     <string name="update_status_no_connection">Bağlantı yok</string>
     <string name="update_status_token_rejected">Token reddedildi</string>
-    <string name="update_status_not_reachable">Repoya erişilemiyor, token ekle</string>
+    <string name="update_status_not_reachable">Repoya erişilemiyor</string>
     <string name="update_status_no_access">Token\'ın aykq/janus erişimi yok</string>
     <string name="update_status_rate_limited">GitHub istek sınırı doldu, sonra dene</string>
     <string name="update_status_failed">Kontrol başarısız: %s</string>

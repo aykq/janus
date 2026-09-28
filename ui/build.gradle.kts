@@ -40,6 +40,7 @@ android {
     }
     buildTypes {
         release {
+            versionNameSuffix = ciBuildNumber?.let { "+$it" } ?: ""
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles("proguard-android-optimize.txt")
