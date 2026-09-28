@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +66,13 @@ class InstallActivity : AppCompatActivity() {
             }
         }
         start()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // A second launch (notification tapped twice, or notification + "Check now") must not start a competing download that wipes the running one's cache.
+        if (state is State.Error || state == State.NeedsPermission) start()
     }
 
     override fun onResume() {
@@ -146,7 +154,7 @@ class InstallActivity : AppCompatActivity() {
     @Composable
     private fun Screen() {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(modifier = Modifier.safeDrawingPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(stringResource(R.string.update_install_title), style = MaterialTheme.typography.headlineSmall)
                 when (val s = state) {
                     is State.Downloading -> {

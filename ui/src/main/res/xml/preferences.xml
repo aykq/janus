@@ -4,6 +4,24 @@
     <org.amnezia.awg.preference.VersionPreference
         android:icon="@drawable/ic_icon"
         android:key="version" />
+    <PreferenceCategory
+        android:key="updates"
+        android:title="@string/update_category">
+        <org.amnezia.awg.update.UpdateTokenPreference
+            android:key="update_token"
+            android:singleLineTitle="false"
+            android:title="@string/update_token_title" />
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="update_candidates"
+            android:singleLineTitle="false"
+            android:summary="@string/update_candidates_summary"
+            android:title="@string/update_candidates_title" />
+        <org.amnezia.awg.update.UpdateCheckPreference
+            android:key="update_check_now"
+            android:singleLineTitle="false"
+            android:title="@string/update_check_title" />
+    </PreferenceCategory>
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="restore_on_boot"
@@ -41,22 +59,4 @@
         android:summaryOff="@string/allow_remote_control_intents_summary_off"
         android:summaryOn="@string/allow_remote_control_intents_summary_on"
         android:title="@string/allow_remote_control_intents_title" />
-    <PreferenceCategory
-        android:key="updates"
-        android:title="@string/update_category">
-        <org.amnezia.awg.update.UpdateTokenPreference
-            android:key="update_token"
-            android:singleLineTitle="false"
-            android:title="@string/update_token_title" />
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:key="update_candidates"
-            android:singleLineTitle="false"
-            android:summary="@string/update_candidates_summary"
-            android:title="@string/update_candidates_title" />
-        <org.amnezia.awg.update.UpdateCheckPreference
-            android:key="update_check_now"
-            android:singleLineTitle="false"
-            android:title="@string/update_check_title" />
-    </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

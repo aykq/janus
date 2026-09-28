@@ -43,7 +43,7 @@ object TokenStore {
         }
     }
 
-    suspend fun isSet(): Boolean = Application.getPreferencesDataStore().data.first()[ENCRYPTED] != null
+    suspend fun isSet(): Boolean = get() != null
 
     @Synchronized
     private fun key(): SecretKey {
