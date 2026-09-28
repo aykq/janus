@@ -1,54 +1,69 @@
 # Janus
 
-Adı Roma'nın kapılar ve geçitler tanrısı Janus'tan: iki yüzü iki yöne bakar, uygulama da
-trafiği VPN ile doğrudan bağlantı arasında ayırır.
+**English** · [Türkçe](README.tr.md)
 
-Kişisel Android VPN istemcisi. [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android)
-(Apache-2.0) forku; orijinal README: [README.upstream.md](README.upstream.md).
+Janus is an Android VPN client for WireGuard and AmneziaWG with **split tunneling by app and by
+website**. Choose which apps and sites stay outside the VPN, or send only a chosen few through it.
 
-Hedef: Proton'un (veya herhangi bir sağlayıcının) WireGuard config'iyle, Amnezia VPN
-uygulamasına ihtiyaç duymadan:
+It works with any standard WireGuard configuration, from a VPN provider or your own server, as
+well as AmneziaWG servers. Janus is a fork of
+[amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android).
 
-- **Split tunnel**: ana ekrandaki karttan; uygulama ve site listeleri global, her biri için 'VPN dışında tut' veya 'Sadece bunlar VPN'den' modu.
-- **Dil**: arayüz varsayılan İngilizce; menü → Language ile Türkçe seçilebilir.
-- **Private DNS bypass** (varsayılan kapalı, son çare): VPN açıkken "Private DNS sunucusuna
-  erişilemiyor" hatasının kök nedeni çözülemezse. Private DNS hostname'i çözülür, IP'leri tünel
-  dışına alınır; sorgular DoT ile şifreli kalır ama VPN IP'si yerine gerçek IP'den gider.
-- **DPI koruması**: tünel editörü → menü → *DPI koruması*. Jc/Jmin/Jmax junk paketlerini ekler.
-  Bunlar el sıkışmadan önce gönderilir ve düz WireGuard sunucularınca yok sayılır, Proton'la
-  uyumludur. S1/S2 ve H1-H4 sunucu desteği ister, Proton'da **dokunma**.
-- **Quick Settings kısayolu**: upstream'den gelir (bildirim panelinde tile ekle).
+## Features
 
-## Değişen dosyalar
+- **Split tunnel by app and by site.** Pick apps from a list and add sites as a domain
+  (`example.com`) or an IP / network (`1.2.3.0/24`). Janus finds the IP addresses of the sites by
+  itself. Each list works in one of two modes:
+  - **Keep outside VPN:** the selected apps and sites go out directly, everything else uses the VPN.
+  - **Only these use VPN:** only the selected apps and sites use the VPN.
+- **DPI protection:** adds junk packets that can help on networks that block VPN traffic. Works
+  with plain WireGuard servers too.
+- **Quick Settings tile** to connect or disconnect from the notification shade.
+- **Automatic reconnect** when a connection gets stuck.
+- **Built-in updates:** new versions are offered inside the app.
+- English and Turkish interface.
 
-| Dosya | Ne |
-| --- | --- |
-| `tunnel/.../backend/GoBackend.java` | `ExcludedRoutesProvider` kancası, `excludeRoute` uygulaması |
-| `ui/.../split/DohResolver.kt` | RFC 8484 DoH istemcisi (A/AAAA) |
-| `ui/.../split/SiteStore.kt` | Site listesi, DoH adresi, Private DNS ayarları, IP önbelleği (DataStore) |
-| `ui/.../split/SiteRouteProvider.kt` | Listeyi rotaya çevirir |
-| `ui/.../split/PrivateDns.kt` | Alttaki ağın Private DNS hostname'ini bulur |
-| `ui/.../activity/SitesActivity.kt` + `activity_sites.xml` | Siteler ekranı |
-| `ui/.../fragment/TunnelEditorFragment.kt` | DPI preset menüsü |
-| `ui/src/main/res/values/strings_janus.xml` | Türkçe metinler |
+## Requirements
 
-Kod namespace'i `org.amnezia.awg` olarak kaldı (upstream'den güncelleme çekmek kolay olsun);
-applicationId `tr.aykq.janus`, yani Amnezia uygulamalarıyla yan yana kurulur.
+- Android 7.0 or newer. Site split tunneling needs Android 13 or newer.
+- A WireGuard or AmneziaWG configuration.
 
-## Derleme
+## Install
 
-```
-git clone --recurse-submodules <repo>
+Download the APK from the [latest release](https://github.com/aykq/janus/releases/tag/debug-latest)
+and open it on your phone.
+
+## Getting started
+
+1. **Add a tunnel:** tap *Add tunnel*, then import a configuration file, scan a QR code or create
+   one from scratch. Tap the big button to connect.
+2. **Split tunnel:** tap the *Split tunnel* card on the home screen, choose apps and sites, and
+   pick a mode. If you are connected, tap *Apply now* to use the new settings right away.
+
+## Privacy
+
+Janus has no accounts, analytics or ads. Besides your VPN server it only connects to GitHub to
+check for updates, and to a DNS-over-HTTPS resolver to look up the sites in your split tunnel list.
+
+## Known limitations
+
+- Site split tunneling works on IP addresses. If a site switches to a new address while you are
+  connected, that traffic follows the default path until you reconnect.
+- Stronger obfuscation settings (S1/S2, H1–H4) need a server that supports them.
+
+## Building from source
+
+```bash
+git clone --recurse-submodules https://github.com/aykq/janus.git
 cd janus
-./gradlew assembleDebug        # ui/build/outputs/apk/debug/ui-debug.apk
+./gradlew assembleDebug
 ```
 
-JDK 17, Android SDK 36, NDK 26.1.10909125 ve Go gerekir (tunnel modülü amneziawg-go'yu derler).
-`master`'a her push'ta GitHub Actions debug APK üretir (Actions → artifact `debug-apk`).
+Requires JDK 17, the Android SDK, the Android NDK and Go.
 
-## Bilinen sınırlar
+## License
 
-- Site split rota tabanlı: IP'si bağlantı sırasında bilinmeyen adresler (yeni CDN IP'si) tünelden
-  gider. Ağ değişince tünel yeniden kurulur ve siteler yeniden çözülür; elle yenilemek için
-  Siteler → *Kaydet ve tüneli yeniden bağla*.
-- Private DNS bypass'ın `excludeRoute` ile sistem DoT trafiğine uygulandığı cihazda test edilmeli.
+Apache License 2.0, see [COPYING](COPYING). Based on
+[amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android) and
+[wireguard-android](https://git.zx2c4.com/wireguard-android).
+WireGuard is a registered trademark of Jason A. Donenfeld.
