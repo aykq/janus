@@ -11,6 +11,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: tunnel/tools/elf-cleaner
     groups:
       submodules:
         patterns: ["*"]
