@@ -4,11 +4,20 @@ updates:
     directory: /tunnel/tools/libwg-go
     schedule:
       interval: weekly
+    groups:
+      go:
+        patterns: ["*"]
   - package-ecosystem: gitsubmodule
     directory: /
     schedule:
       interval: weekly
+    groups:
+      submodules:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
