@@ -46,7 +46,7 @@ jobs:
 
     - name: Download APK
       if: ${{ steps.pr.outputs.skip != 'true' }}
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: debug-apk
         run-id: ${{ github.event.workflow_run.id }}
@@ -55,7 +55,7 @@ jobs:
 
     - name: Set up Android SDK
       if: ${{ steps.pr.outputs.skip != 'true' }}
-      uses: android-actions/setup-android@v3
+      uses: android-actions/setup-android@v4
       with:
         packages: "build-tools;36.0.0"
 
