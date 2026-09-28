@@ -4,12 +4,13 @@ run-name: "Android • ${{ inputs.ref || github.ref_name }}"
 on:
   push:
     branches: [master]
+    tags: ["v*"]
   pull_request:
     branches: [master]
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref (branch/tag/sha)"
+        description: "Git ref (branch/tag/sha); a v* tag republishes that release"
         required: false
         default: "master"
 
@@ -60,7 +61,10 @@ jobs:
       run: |
         set -euo pipefail
         chmod +x ./gradlew
-        ./gradlew --no-daemon --stacktrace -PjanusBuildNumber=$(( ${{ github.run_number }} + BUILD_OFFSET )) :ui:testReleaseUnitTest :ui:assembleRelease
+        REF="${{ inputs.ref || github.ref_name }}"
+        VERSION_ARG=()
+        if [[ "$REF" == v* ]]; then VERSION_ARG=("-PjanusVersionName=${REF#v}"); fi
+        ./gradlew --no-daemon --stacktrace -PjanusBuildNumber=$(( ${{ github.run_number }} + BUILD_OFFSET )) "${VERSION_ARG[@]}" :ui:testReleaseUnitTest :ui:assembleRelease
 
     - name: Upload unsigned APK
       uses: actions/upload-artifact@v7
@@ -69,8 +73,8 @@ jobs:
         path: ./ui/build/outputs/apk/release/ui-release-unsigned.apk
         if-no-files-found: error
 
-    - name: Sign and publish stable release
-      if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.ref == 'master') }}
+    - name: Sign and publish release
+      if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && startsWith(inputs.ref, 'v')) }}
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
@@ -84,13 +88,13 @@ jobs:
         fi
         echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/janus-release.p12"
         CODE="$(( ${{ github.run_number }} + BUILD_OFFSET ))"
-        SHA="$(git rev-parse HEAD)"
+        TAG="${{ inputs.ref || github.ref_name }}"
         APK="janus-${CODE}-stable.apk"
         "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$RUNNER_TEMP/janus-release.p12" --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias janus --out "$APK" ./ui/build/outputs/apk/release/ui-release-unsigned.apk
         "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
         SUM="$(sha256sum "$APK" | cut -d' ' -f1)"
         {
-          echo "Janus build ${CODE} from master (${SHA})."
+          echo "Janus ${TAG#v} (build ${CODE})."
           echo
           echo "<!-- janus-update"
           echo "versionCode: ${CODE}"
@@ -98,5 +102,5 @@ jobs:
           echo "channel: stable"
           echo "-->"
         } > notes.md
-        gh release delete stable --cleanup-tag --yes || true
-        gh release create stable "$APK" --target "$SHA" --title "Janus (build ${CODE})" --notes-file notes.md --latest
+        gh release delete "$TAG" --yes || true
+        gh release create "$TAG" "$APK" --verify-tag --title "Janus ${TAG#v}" --notes-file notes.md --latest

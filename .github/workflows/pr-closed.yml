@@ -31,7 +31,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: gh release delete "pr-${{ github.event.pull_request.number }}" --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
-    - name: Rebuild master so devices can roll back
+    - name: Republish the latest release so devices can roll back
       # Only rebuild when a candidate actually existed and the user rejected it; otherwise this hides other open candidates behind a pointless higher run_number.
       if: >-
         steps.candidate.outputs.existed == 'true' &&
@@ -39,4 +39,7 @@ jobs:
         github.event.sender.login != 'dependabot[bot]'
       env:
         GH_TOKEN: ${{ github.token }}
-      run: gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref master -f ref=master
+      run: |
+        set -euo pipefail
+        TAG="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+        gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref "$TAG" -f ref="$TAG"
