@@ -15,7 +15,4 @@ object UpdatePolicy {
 
     fun shouldNotify(release: UpdateRelease, lastNotifiedVersionCode: Long) =
         release.versionCode > lastNotifiedVersionCode
-
-    fun normalizeToken(raw: String): String? =
-        raw.filterNot { it.isWhitespace() }.takeIf { it.isNotEmpty() }
 }

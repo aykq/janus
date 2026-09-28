@@ -41,10 +41,4 @@ class UpdatePolicyTest {
         assertTrue(UpdatePolicy.shouldNotify(r(45), 44))
         assertFalse(UpdatePolicy.shouldNotify(r(45), 45))
     }
-
-    @Test
-    fun normalizeTokenStripsWhitespace() {
-        assertEquals("github_pat_abc", UpdatePolicy.normalizeToken("  github_pat_abc\n"))
-        assertNull(UpdatePolicy.normalizeToken(" \n "))
-    }
 }

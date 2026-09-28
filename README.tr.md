@@ -37,7 +37,7 @@ ve AmneziaWG sunucularıyla çalışır. Janus,
 
 ## Kurulum
 
-APK'yı [son sürüm](https://github.com/aykq/janus/releases/tag/debug-latest) sayfasından indirip
+APK'yı [son sürüm](https://github.com/aykq/janus/releases/latest) sayfasından indirip
 telefonunuzda açın.
 
 ## Başlarken

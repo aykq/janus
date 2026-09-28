@@ -70,4 +70,4 @@ jobs:
             --title "Merge upstream amneziawg-android (${BEHIND} commits)" \
             --body "Automated weekly upstream sync. Upstream head: ${UPSTREAM_HEAD}."
         fi
-        gh workflow run build.yml --ref upstream-sync -f target=debug_apk -f ref=upstream-sync
+        gh workflow run build.yml --ref upstream-sync -f ref=upstream-sync

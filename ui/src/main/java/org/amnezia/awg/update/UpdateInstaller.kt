@@ -26,7 +26,7 @@ object UpdateInstaller {
             dir.deleteRecursively()
             dir.mkdirs()
             val file = File(dir, "janus-$versionCode.apk")
-            GitHubClient(TokenStore.get()).download(assetUrl, file) { done, total ->
+            GitHubClient.download(assetUrl, file) { done, total ->
                 if (total > 0) onProgress(done.toFloat() / total)
             }
             if (Checksums.sha256(file) != sha256) {

@@ -100,13 +100,6 @@
     <string name="update_install_confirm_notification">Tap to confirm the Janus update.</string>
 
     <string name="update_category">Updates</string>
-    <string name="update_token_title">GitHub token</string>
-    <string name="update_token_summary_set">Set</string>
-    <string name="update_token_summary_unset">Not set (needed while the repository is private)</string>
-    <string name="update_token_message">Fine-grained token with read-only access to aykq/janus. Leave empty once the repository is public.</string>
-    <string name="update_token_hint">github_pat_…</string>
-    <string name="update_token_save">Save</string>
-    <string name="update_token_clear">Clear</string>
     <string name="update_candidates_title">Notify about pre-releases</string>
     <string name="update_candidates_summary">Test builds of dependency and upstream updates, before they reach the stable release</string>
     <string name="update_check_title">Check now</string>
@@ -116,9 +109,7 @@
     <string name="update_status_up_to_date">Up to date</string>
     <string name="update_status_available">Build %s available, tap to install</string>
     <string name="update_status_no_connection">No connection</string>
-    <string name="update_status_token_rejected">Token rejected</string>
-    <string name="update_status_not_reachable">Repository not reachable, add a token</string>
-    <string name="update_status_no_access">Token has no access to aykq/janus</string>
+    <string name="update_status_not_reachable">Repository not reachable</string>
     <string name="update_status_rate_limited">GitHub rate limit reached, try later</string>
     <string name="update_status_failed">Check failed: %s</string>
 </resources>

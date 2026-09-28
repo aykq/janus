@@ -13,13 +13,12 @@ import java.io.IOException
 
 object UpdateChecker {
     suspend fun check(context: Context, notify: Boolean, force: Boolean): CheckStatus = withContext(Dispatchers.IO) {
-        val token = runCatching { TokenStore.get() }.getOrNull()
         val status = try {
-            val releases = ReleaseParser.parse(GitHubClient(token).fetchReleases())
+            val releases = ReleaseParser.parse(GitHubClient.fetchReleases())
             val newest = UpdatePolicy.newest(releases, installedVersionCode(context), UpdateState.candidatesEnabled())
             if (newest == null) CheckStatus.UpToDate else CheckStatus.Available(newest)
         } catch (e: GitHubClient.HttpError) {
-            CheckStatus.fromHttp(e.code, e.rateLimitRemaining, token != null)
+            CheckStatus.fromHttp(e.code, e.rateLimitRemaining)
         } catch (_: IOException) {
             CheckStatus.NoConnection
         } catch (e: IllegalArgumentException) {

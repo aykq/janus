@@ -7,10 +7,6 @@
     <PreferenceCategory
         android:key="updates"
         android:title="@string/update_category">
-        <org.amnezia.awg.update.UpdateTokenPreference
-            android:key="update_token"
-            android:singleLineTitle="false"
-            android:title="@string/update_token_title" />
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="update_candidates"

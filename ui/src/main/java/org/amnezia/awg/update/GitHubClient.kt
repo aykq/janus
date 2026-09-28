@@ -12,11 +12,17 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-class GitHubClient(private val token: String?) {
+object GitHubClient {
     class HttpError(val code: Int, val rateLimitRemaining: String?) : IOException("HTTP $code")
 
+    const val REPO = "aykq/janus"
+    private const val API_PREFIX = "https://api.github.com/repos/$REPO/"
+    private const val RELEASES_URL = "${API_PREFIX}releases?per_page=30"
+    private const val TIMEOUT_MS = 15_000
+    private const val TRAFFIC_TAG = 0x4a55
+
     fun fetchReleases(): String = tagged {
-        val conn = open(RELEASES_URL, "application/vnd.github+json", withAuth = true, followRedirects = true)
+        val conn = open(RELEASES_URL, "application/vnd.github+json", followRedirects = true)
         try {
             val code = conn.responseCode
             if (code != HttpURLConnection.HTTP_OK) throw HttpError(code, conn.getHeaderField("X-RateLimit-Remaining"))
@@ -28,15 +34,14 @@ class GitHubClient(private val token: String?) {
 
     fun download(assetUrl: String, dest: File, onProgress: (Long, Long) -> Unit) = tagged {
         require(assetUrl.startsWith(API_PREFIX)) { "Unexpected asset URL" }
-        var conn = open(assetUrl, "application/octet-stream", withAuth = true, followRedirects = false)
+        var conn = open(assetUrl, "application/octet-stream", followRedirects = false)
         try {
             var code = conn.responseCode
             if (code in 300..399) {
                 val location = conn.getHeaderField("Location")
                 if (location == null || !location.startsWith("https://")) throw IOException("Bad redirect")
                 conn.disconnect()
-                // The redirect target is a pre-signed URL; sending the token as well makes it fail.
-                conn = open(location, "application/octet-stream", withAuth = false, followRedirects = true)
+                conn = open(location, "application/octet-stream", followRedirects = true)
                 code = conn.responseCode
             }
             if (code != HttpURLConnection.HTTP_OK) throw HttpError(code, conn.getHeaderField("X-RateLimit-Remaining"))
@@ -59,7 +64,7 @@ class GitHubClient(private val token: String?) {
         }
     }
 
-    private fun open(url: String, accept: String, withAuth: Boolean, followRedirects: Boolean): HttpURLConnection {
+    private fun open(url: String, accept: String, followRedirects: Boolean): HttpURLConnection {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = TIMEOUT_MS
         conn.readTimeout = TIMEOUT_MS
@@ -67,7 +72,6 @@ class GitHubClient(private val token: String?) {
         conn.setRequestProperty("Accept", accept)
         conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
         conn.setRequestProperty("User-Agent", "Janus/${BuildConfig.VERSION_NAME}")
-        if (withAuth && token != null) conn.setRequestProperty("Authorization", "Bearer $token")
         return conn
     }
 
@@ -78,13 +82,5 @@ class GitHubClient(private val token: String?) {
         } finally {
             TrafficStats.clearThreadStatsTag()
         }
-    }
-
-    companion object {
-        const val REPO = "aykq/janus"
-        private const val API_PREFIX = "https://api.github.com/repos/$REPO/"
-        private const val RELEASES_URL = "${API_PREFIX}releases?per_page=30"
-        private const val TIMEOUT_MS = 15_000
-        private const val TRAFFIC_TAG = 0x4a55
     }
 }
