@@ -24,7 +24,11 @@ class UpdateCheckPreference(context: Context, attrs: AttributeSet?) : Preference
     init {
         lifecycleScope.launch {
             val (at, encoded) = UpdateState.lastCheck()
-            val decoded = StatusCodec.decode(encoded)
+            val decoded = StatusCodec.decode(encoded)?.let { (kind, arg) ->
+                // A stored "available" result is stale once that build (or newer) is installed.
+                val installed = UpdateChecker.installedVersionCode(context)
+                if (kind == StatusKind.AVAILABLE && (arg?.toLongOrNull() ?: 0L) <= installed) StatusKind.UP_TO_DATE to null else kind to arg
+            }
             if (at > 0 && decoded != null) {
                 summaryText = context.getString(
                     R.string.update_check_last,
