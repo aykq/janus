@@ -58,6 +58,11 @@ jobs:
           open_issue "Upstream changes files under .github/workflows."
           exit 0
         fi
+        git fetch origin upstream-sync 2>/dev/null || true
+        if git rev-parse --verify --quiet origin/upstream-sync >/dev/null && git diff --quiet origin/upstream-sync HEAD; then
+          echo "upstream-sync already up to date"
+          exit 0
+        fi
         git push -f origin upstream-sync
         EXISTING="$(gh pr list --head upstream-sync --state open --json number --jq '.[0].number // empty')"
         if [[ -z "$EXISTING" ]]; then

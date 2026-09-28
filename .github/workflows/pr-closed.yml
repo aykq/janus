@@ -15,12 +15,28 @@ jobs:
       (github.event.pull_request.user.login == 'dependabot[bot]' || github.event.pull_request.head.ref == 'upstream-sync')
     runs-on: ubuntu-latest
     steps:
+    - name: Check whether a candidate release existed
+      id: candidate
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -euo pipefail
+        if gh release view "pr-${PR_NUMBER}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          echo "existed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "existed=false" >> "$GITHUB_OUTPUT"
+        fi
     - name: Delete candidate release
       env:
         GH_TOKEN: ${{ github.token }}
       run: gh release delete "pr-${{ github.event.pull_request.number }}" --cleanup-tag --yes -R "$GITHUB_REPOSITORY" || true
     - name: Rebuild master so devices can roll back
-      if: ${{ github.event.pull_request.merged == false }}
+      # Only rebuild when a candidate actually existed and the user rejected it; otherwise this hides other open candidates behind a pointless higher run_number.
+      if: >-
+        steps.candidate.outputs.existed == 'true' &&
+        github.event.pull_request.merged == false &&
+        github.event.sender.login != 'dependabot[bot]'
       env:
         GH_TOKEN: ${{ github.token }}
       run: gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref master -f target=debug_apk -f ref=master

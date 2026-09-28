@@ -25,7 +25,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'build-main' }}
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('build-{0}-{1}', inputs.target || 'debug_apk', inputs.ref || github.ref_name) }}
   cancel-in-progress: false
 
 jobs:
