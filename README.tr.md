@@ -10,6 +10,12 @@ Bir VPN sağlayıcısından ya da kendi sunucunuzdan aldığınız her standart 
 ve AmneziaWG sunucularıyla çalışır. Janus,
 [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android)'in forkudur.
 
+<p align="center">
+  <img src=".github/screenshots/home.png" width="250" alt="Ana ekran">
+  <img src=".github/screenshots/split-apps.png" width="250" alt="Uygulama bazlı split tunnel">
+  <img src=".github/screenshots/split-sites.png" width="250" alt="Site bazlı split tunnel">
+</p>
+
 ## Özellikler
 
 - **Uygulama ve site bazlı split tunnel.** Uygulamaları listeden seçin, siteleri alan adı

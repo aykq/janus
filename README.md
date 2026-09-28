@@ -9,6 +9,12 @@ It works with any standard WireGuard configuration, from a VPN provider or your 
 well as AmneziaWG servers. Janus is a fork of
 [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android).
 
+<p align="center">
+  <img src=".github/screenshots/home.png" width="250" alt="Home screen">
+  <img src=".github/screenshots/split-apps.png" width="250" alt="Split tunnel for apps">
+  <img src=".github/screenshots/split-sites.png" width="250" alt="Split tunnel for sites">
+</p>
+
 ## Features
 
 - **Split tunnel by app and by site.** Pick apps from a list and add sites as a domain
