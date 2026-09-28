@@ -73,7 +73,7 @@
 
     <string name="update_channel_name">Güncellemeler</string>
     <string name="update_notification_stable">Janus güncellemesi hazır (derleme %d)</string>
-    <string name="update_notification_candidate">Aday sürüm #%d</string>
+    <string name="update_notification_candidate">Ön sürüm #%d</string>
     <string name="update_notification_text">İndirip kurmak için dokun.</string>
     <string name="update_action_install">İndir ve kur</string>
     <string name="update_action_open_pr">PR\'ı aç</string>
@@ -101,8 +101,8 @@
     <string name="update_token_hint">github_pat_…</string>
     <string name="update_token_save">Kaydet</string>
     <string name="update_token_clear">Temizle</string>
-    <string name="update_candidates_title">Aday sürümleri bildir</string>
-    <string name="update_candidates_summary">Dependabot ve upstream PR derlemeleri, merge edilmeden önce</string>
+    <string name="update_candidates_title">Ön sürümleri (pre-release) bildir</string>
+    <string name="update_candidates_summary">Bağımlılık ve upstream güncellemelerinin test derlemeleri, kararlı sürüme geçmeden önce</string>
     <string name="update_check_title">Şimdi kontrol et</string>
     <string name="update_check_never">Hiç kontrol edilmedi</string>
     <string name="update_check_running">Kontrol ediliyor…</string>

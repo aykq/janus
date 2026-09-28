@@ -79,7 +79,7 @@
 
     <string name="update_channel_name">Updates</string>
     <string name="update_notification_stable">Janus update available (build %d)</string>
-    <string name="update_notification_candidate">Candidate build #%d</string>
+    <string name="update_notification_candidate">Pre-release build #%d</string>
     <string name="update_notification_text">Tap to download and install.</string>
     <string name="update_action_install">Download and install</string>
     <string name="update_action_open_pr">Open PR</string>
@@ -107,8 +107,8 @@
     <string name="update_token_hint">github_pat_…</string>
     <string name="update_token_save">Save</string>
     <string name="update_token_clear">Clear</string>
-    <string name="update_candidates_title">Notify about candidate builds</string>
-    <string name="update_candidates_summary">Builds from Dependabot and upstream pull requests, before they are merged</string>
+    <string name="update_candidates_title">Notify about pre-releases</string>
+    <string name="update_candidates_summary">Test builds of dependency and upstream updates, before they reach the stable release</string>
     <string name="update_check_title">Check now</string>
     <string name="update_check_never">Never checked</string>
     <string name="update_check_running">Checking…</string>
