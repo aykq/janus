@@ -39,4 +39,4 @@ jobs:
         github.event.sender.login != 'dependabot[bot]'
       env:
         GH_TOKEN: ${{ github.token }}
-      run: gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref master -f target=debug_apk -f ref=master
+      run: gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref master -f ref=master

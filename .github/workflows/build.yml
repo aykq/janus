@@ -1,5 +1,5 @@
-name: Android build (signed AAB / debug APK)
-run-name: "Android • ${{ inputs.target || 'debug_apk' }} • ${{ inputs.ref || github.ref_name }}"
+name: Android build
+run-name: "Android • ${{ inputs.ref || github.ref_name }}"
 
 on:
   push:
@@ -8,14 +8,6 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
-      target:
-        description: "What to build"
-        type: choice
-        required: true
-        default: release_aab
-        options:
-        - release_aab
-        - debug_apk
       ref:
         description: "Git ref (branch/tag/sha)"
         required: false
@@ -29,12 +21,12 @@ env:
   BUILD_OFFSET: 100
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('build-{0}-{1}', inputs.target || 'debug_apk', inputs.ref || github.ref_name) }}
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('build-{0}', inputs.ref || github.ref_name) }}
   cancel-in-progress: false
 
 jobs:
   build:
-    name: "Build (${{ inputs.target || 'debug_apk' }})"
+    name: Build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,137 +53,44 @@ jobs:
       with:
         # The legacy "tools" package (part of the action's default) was removed
         # from Google's SDK repository; AGP downloads whatever else it needs.
-        packages: platform-tools
-
-    - name: Configure build
-      id: cfg
-      shell: bash
-      run: |
-        set -euo pipefail
-        case "${{ inputs.target || 'debug_apk' }}" in
-          release_aab)
-            echo "gradle_task=bundleRelease" >> "$GITHUB_OUTPUT"
-            echo "kind=aab" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=release-aab" >> "$GITHUB_OUTPUT"
-            echo "needs_signing=true" >> "$GITHUB_OUTPUT"
-            echo "extra_args=" >> "$GITHUB_OUTPUT"
-            ;;
-          debug_apk)
-            echo "gradle_task=assembleDebug" >> "$GITHUB_OUTPUT"
-            echo "kind=apk" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=debug-apk" >> "$GITHUB_OUTPUT"
-            echo "needs_signing=false" >> "$GITHUB_OUTPUT"
-            echo "extra_args=-PjanusBuildNumber=$(( ${{ github.run_number }} + BUILD_OFFSET ))" >> "$GITHUB_OUTPUT"
-            ;;
-          *)
-            echo "Unknown target: ${{ inputs.target || 'debug_apk' }}" >&2
-            exit 1
-            ;;
-        esac
-
-    - name: Decode keystore from secret
-      if: ${{ steps.cfg.outputs.needs_signing == 'true' }}
-      shell: bash
-      env:
-        KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      run: |
-        set -euo pipefail
-        if [[ -z "${KEYSTORE_B64}" ]]; then
-          echo "Missing secret ANDROID_KEYSTORE_BASE64" >&2
-          exit 1
-        fi
-        echo "${KEYSTORE_B64}" | base64 --decode > release.keystore.jks
-        echo "KEYSTORE_PATH=${PWD}/release.keystore.jks" >> "$GITHUB_ENV"
-
-    - name: Install fixed debug keystore
-      if: ${{ github.event_name != 'pull_request' }}
-      shell: bash
-      env:
-        DEBUG_KEYSTORE_B64: ${{ secrets.JANUS_DEBUG_KEYSTORE_B64 }}
-      run: |
-        set -euo pipefail
-        # Without a fixed key every run signs debug APKs differently and in-place updates fail.
-        if [[ -z "${DEBUG_KEYSTORE_B64}" ]]; then
-          echo "Missing secret JANUS_DEBUG_KEYSTORE_B64" >&2
-          exit 1
-        fi
-        echo "${DEBUG_KEYSTORE_B64}" | base64 --decode > "$RUNNER_TEMP/janus-debug.keystore"
-        echo "JANUS_DEBUG_KEYSTORE=$RUNNER_TEMP/janus-debug.keystore" >> "$GITHUB_ENV"
+        packages: "platform-tools build-tools;36.0.0"
 
     - name: Build
       shell: bash
       run: |
         set -euo pipefail
         chmod +x ./gradlew
-        ./gradlew --no-daemon --stacktrace ${{ steps.cfg.outputs.extra_args }} :ui:testDebugUnitTest ${{ steps.cfg.outputs.gradle_task }}
+        ./gradlew --no-daemon --stacktrace -PjanusBuildNumber=$(( ${{ github.run_number }} + BUILD_OFFSET )) :ui:testReleaseUnitTest :ui:assembleRelease
 
-    - name: Locate built artifact
-      id: locate
-      shell: bash
-      run: |
-        set -euo pipefail
-        
-        if [[ "${{ steps.cfg.outputs.kind }}" == "aab" ]]; then
-          FILE="./ui/build/outputs/bundle/release/ui-release.aab"
-        else
-          FILE="./ui/build/outputs/apk/debug/ui-debug.apk"
-        fi
-        
-        if [[ -z "${FILE}" ]]; then
-          echo "Built file not found" >&2
-          exit 1
-        fi
-        
-        echo "built_file=${FILE}" >> "$GITHUB_OUTPUT"
-
-    - name: Sign AAB
-      if: ${{ steps.cfg.outputs.needs_signing == 'true' }}
-      id: sign
-      shell: bash
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      run: |
-        set -euo pipefail
-        
-        AAB="${{ steps.locate.outputs.built_file }}"
-        SIGNED_AAB="${AAB%.aab}-signed.aab"
-        
-        if [[ -z "${KEYSTORE_PASSWORD}" || -z "${KEY_ALIAS}" ]]; then
-          echo "Missing one of secrets: ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS" >&2
-          exit 1
-        fi
-        
-        jarsigner \
-          -keystore "${KEYSTORE_PATH}" \
-          -storepass "${KEYSTORE_PASSWORD}" \
-          -signedjar "${SIGNED_AAB}" \
-          "${AAB}" \
-          "${KEY_ALIAS}"
-        
-        echo "final_file=${SIGNED_AAB}" >> "$GITHUB_OUTPUT"
-
-    - name: Upload artifact
+    - name: Upload unsigned APK
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ steps.cfg.outputs.artifact_name }}
-        path: ${{ steps.sign.outputs.final_file || steps.locate.outputs.built_file }}
+        name: release-apk-unsigned
+        path: ./ui/build/outputs/apk/release/ui-release-unsigned.apk
         if-no-files-found: error
 
-    - name: Publish stable release
-      if: ${{ steps.cfg.outputs.kind == 'apk' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.ref == 'master')) }}
+    - name: Sign and publish stable release
+      if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.ref == 'master') }}
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        KEYSTORE_B64: ${{ secrets.JANUS_RELEASE_KEYSTORE_B64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.JANUS_RELEASE_KEYSTORE_PASSWORD }}
       run: |
         set -euo pipefail
+        if [[ -z "${KEYSTORE_B64}" || -z "${KEYSTORE_PASSWORD}" ]]; then
+          echo "Missing secret JANUS_RELEASE_KEYSTORE_B64 / JANUS_RELEASE_KEYSTORE_PASSWORD" >&2
+          exit 1
+        fi
+        echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/janus-release.p12"
         CODE="$(( ${{ github.run_number }} + BUILD_OFFSET ))"
         SHA="$(git rev-parse HEAD)"
         APK="janus-${CODE}-stable.apk"
-        cp ./ui/build/outputs/apk/debug/ui-debug.apk "$APK"
+        "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$RUNNER_TEMP/janus-release.p12" --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias janus --out "$APK" ./ui/build/outputs/apk/release/ui-release-unsigned.apk
+        "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
         SUM="$(sha256sum "$APK" | cut -d' ' -f1)"
         {
-          echo "Latest debug build from master (${SHA})."
+          echo "Janus build ${CODE} from master (${SHA})."
           echo
           echo "<!-- janus-update"
           echo "versionCode: ${CODE}"
@@ -199,5 +98,5 @@ jobs:
           echo "channel: stable"
           echo "-->"
         } > notes.md
-        gh release delete debug-latest --cleanup-tag --yes || true
-        gh release create debug-latest "$APK" --target "$SHA" --title "Latest debug build (${CODE})" --notes-file notes.md
+        gh release delete stable --cleanup-tag --yes || true
+        gh release create stable "$APK" --target "$SHA" --title "Janus (build ${CODE})" --notes-file notes.md --latest
