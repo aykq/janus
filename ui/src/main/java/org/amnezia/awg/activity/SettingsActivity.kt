@@ -13,6 +13,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
 import org.amnezia.awg.Application
 import org.amnezia.awg.QuickTileService
 import org.amnezia.awg.R
@@ -52,6 +53,9 @@ class SettingsActivity : AppCompatActivity() {
             preferenceManager.preferenceDataStore = PreferencesPreferenceDataStore(lifecycleScope, Application.getPreferencesDataStore())
             addPreferencesFromResource(R.xml.preferences)
             preferenceScreen.initialExpandedChildrenCount = 5
+            preferenceManager.findPreference<PreferenceGroup>("updates")?.let {
+                preferenceScreen.initialExpandedChildrenCount += it.preferenceCount
+            }
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || QuickTileService.isAdded) {
                 val quickTile = preferenceManager.findPreference<Preference>("quick_tile")
