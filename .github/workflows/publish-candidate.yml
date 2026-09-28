@@ -10,6 +10,10 @@ permissions:
   actions: read
   pull-requests: read
 
+env:
+  # Must equal BUILD_OFFSET in build.yml, which bakes it into the APK's versionCode.
+  BUILD_OFFSET: 100
+
 jobs:
   publish:
     if: >-
@@ -63,10 +67,11 @@ jobs:
         DEBUG_KEYSTORE_B64: ${{ secrets.JANUS_DEBUG_KEYSTORE_B64 }}
         NUMBER: ${{ steps.pr.outputs.number }}
         URL: ${{ steps.pr.outputs.url }}
-        CODE: ${{ github.event.workflow_run.run_number }}
+        RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
         HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
         set -euo pipefail
+        CODE="$(( RUN_NUMBER + BUILD_OFFSET ))"
         if [[ -z "${DEBUG_KEYSTORE_B64}" ]]; then echo "Missing secret JANUS_DEBUG_KEYSTORE_B64" >&2; exit 1; fi
         echo "$DEBUG_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/janus-debug.keystore"
         APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
