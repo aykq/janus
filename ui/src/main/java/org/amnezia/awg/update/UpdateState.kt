@@ -22,7 +22,8 @@ object UpdateState {
 
     private suspend fun prefs() = Application.getPreferencesDataStore().data.first()
 
-    suspend fun candidatesEnabled(): Boolean = prefs()[CANDIDATES] ?: true
+    // Must match android:defaultValue of update_candidates in preferences.xml.
+    suspend fun candidatesEnabled(): Boolean = prefs()[CANDIDATES] ?: false
 
     suspend fun lastNotified(): Long = prefs()[LAST_NOTIFIED] ?: 0L
 
