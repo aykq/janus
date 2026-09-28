@@ -13,9 +13,7 @@ object UpdateStatusText {
         StatusKind.UP_TO_DATE -> context.getString(R.string.update_status_up_to_date)
         StatusKind.AVAILABLE -> context.getString(R.string.update_status_available, arg ?: "")
         StatusKind.NO_CONNECTION -> context.getString(R.string.update_status_no_connection)
-        StatusKind.TOKEN_REJECTED -> context.getString(R.string.update_status_token_rejected)
         StatusKind.NOT_REACHABLE -> context.getString(R.string.update_status_not_reachable)
-        StatusKind.NOT_REACHABLE_WITH_TOKEN -> context.getString(R.string.update_status_no_access)
         StatusKind.RATE_LIMITED -> context.getString(R.string.update_status_rate_limited)
         StatusKind.FAILED -> context.getString(R.string.update_status_failed, arg ?: "")
     }

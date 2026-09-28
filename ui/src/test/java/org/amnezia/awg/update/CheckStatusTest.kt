@@ -7,19 +7,17 @@ import org.junit.Test
 class CheckStatusTest {
     @Test
     fun classifiesHttpErrors() {
-        assertEquals(CheckStatus.TokenRejected, CheckStatus.fromHttp(401, null, hadToken = true))
-        assertEquals(CheckStatus.RateLimited, CheckStatus.fromHttp(403, "0", hadToken = false))
-        assertEquals(CheckStatus.RateLimited, CheckStatus.fromHttp(429, "0", hadToken = true))
-        assertEquals(CheckStatus.TokenRejected, CheckStatus.fromHttp(403, "12", hadToken = true))
-        assertEquals(CheckStatus.NotReachable(false), CheckStatus.fromHttp(403, "12", hadToken = false))
-        assertEquals(CheckStatus.NotReachable(false), CheckStatus.fromHttp(404, null, hadToken = false))
-        assertEquals(CheckStatus.NotReachable(true), CheckStatus.fromHttp(404, null, hadToken = true))
-        assertEquals(CheckStatus.Failed("HTTP 500"), CheckStatus.fromHttp(500, null, hadToken = false))
+        assertEquals(CheckStatus.RateLimited, CheckStatus.fromHttp(403, "0"))
+        assertEquals(CheckStatus.RateLimited, CheckStatus.fromHttp(429, "0"))
+        assertEquals(CheckStatus.NotReachable, CheckStatus.fromHttp(403, "12"))
+        assertEquals(CheckStatus.NotReachable, CheckStatus.fromHttp(404, null))
+        assertEquals(CheckStatus.Failed("HTTP 401"), CheckStatus.fromHttp(401, null))
+        assertEquals(CheckStatus.Failed("HTTP 500"), CheckStatus.fromHttp(500, null))
     }
 
     @Test
     fun kindAndArg() {
-        assertEquals(StatusKind.NOT_REACHABLE_WITH_TOKEN, CheckStatus.NotReachable(true).kind)
+        assertEquals(StatusKind.NOT_REACHABLE, CheckStatus.NotReachable.kind)
         assertEquals("HTTP 502", CheckStatus.Failed("HTTP 502").arg)
         assertNull(CheckStatus.UpToDate.arg)
     }
@@ -35,5 +33,11 @@ class CheckStatusTest {
     fun codecRejectsGarbage() {
         assertNull(StatusCodec.decode(null))
         assertNull(StatusCodec.decode("NOPE"))
+    }
+
+    @Test
+    fun ignoresStatusesStoredByOlderVersions() {
+        assertNull(StatusCodec.decode("TOKEN_REJECTED"))
+        assertNull(StatusCodec.decode("NOT_REACHABLE_WITH_TOKEN"))
     }
 }
