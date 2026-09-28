@@ -36,7 +36,7 @@ well as AmneziaWG servers. Janus is a fork of
 
 ## Install
 
-Download the APK from the [latest release](https://github.com/aykq/janus/releases/tag/debug-latest)
+Download the APK from the [latest release](https://github.com/aykq/janus/releases/latest)
 and open it on your phone.
 
 ## Getting started
