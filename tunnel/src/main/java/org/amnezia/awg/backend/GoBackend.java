@@ -53,7 +53,12 @@ public final class GoBackend implements Backend {
     private static final long SERVICE_STOP_TIMEOUT_MS = 2000;
     private static final long HANDSHAKE_WATCHDOG_MS = 6000;
     private static final int HANDSHAKE_WATCHDOG_MAX_RETRIES = 2;
+    private static final long LIVENESS_POLL_MS = 2000;
+    private static final long LIVENESS_STALL_MS = 20000;
+    private static final long LIVENESS_MIN_TX_BYTES = 600;
+    private static final int LIVENESS_MAX_RETRIES = 3;
     private volatile int watchdogRetries;
+    private volatile int livenessRetries;
     private final Context context;
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
@@ -269,6 +274,7 @@ public final class GoBackend implements Backend {
                     if (statusCallback != null) {
                         statusCallback.onStatusChanged(true);
                     }
+                    monitorLiveness(watchedTunnel, watchedHandle);
                     break;
                 }
 
@@ -280,9 +286,71 @@ public final class GoBackend implements Backend {
                     break;
                 }
             }
-            statusThread = null;
+            // A reconnect may already have started the next job; do not drop its handle.
+            if (statusThread == Thread.currentThread()) {
+                statusThread = null;
+            }
         }, "StatusJob");
         statusThread.start();
+    }
+
+    private void monitorLiveness(final Tunnel tunnel, final int handle) {
+        final StallDetector detector = new StallDetector(LIVENESS_STALL_MS, LIVENESS_MIN_TX_BYTES);
+        boolean stalled = false;
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                Thread.sleep(LIVENESS_POLL_MS);
+                if (tunnel != currentTunnel || handle != currentTunnelHandle)
+                    return;
+                final Statistics stats = getStatistics(tunnel);
+                switch (detector.onSample(System.currentTimeMillis(), stats.totalRx(), stats.totalTx())) {
+                    case HEALTHY:
+                        livenessRetries = 0;
+                        break;
+                    case RECOVERED:
+                        livenessRetries = 0;
+                        stalled = false;
+                        if (statusCallback != null)
+                            statusCallback.onStatusChanged(true);
+                        break;
+                    case STALLED:
+                        if (!stalled) {
+                            stalled = true;
+                            if (statusCallback != null)
+                                statusCallback.onStatusChanged(false);
+                        }
+                        if (livenessRetries < LIVENESS_MAX_RETRIES) {
+                            reconnectAfterStalledTraffic(tunnel, handle);
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // Must not run on the status thread: DOWN interrupts it and the service-stop wait would throw.
+    private void reconnectAfterStalledTraffic(final Tunnel tunnel, final int handle) {
+        new Thread(() -> {
+            synchronized (this) {
+                if (tunnel != currentTunnel || handle != currentTunnelHandle || currentConfig == null)
+                    return;
+                final Config config = currentConfig;
+                ++livenessRetries;
+                Log.w(TAG, "Peer silent for " + LIVENESS_STALL_MS + " ms while sending, reconnecting (attempt "
+                        + livenessRetries + '/' + LIVENESS_MAX_RETRIES + ')');
+                try {
+                    setStateInternal(tunnel, null, State.DOWN);
+                    setStateInternal(tunnel, config, State.UP);
+                } catch (final Exception e) {
+                    Log.e(TAG, "Liveness reconnect failed", e);
+                }
+            }
+        }, "LivenessWatchdog").start();
     }
 
     // Must not run on the status thread: DOWN interrupts it and the service-stop wait would throw.
@@ -338,6 +406,7 @@ public final class GoBackend implements Backend {
     @Override
     public synchronized State setState(final Tunnel tunnel, State state, @Nullable final Config config) throws Exception {
         watchdogRetries = 0;
+        livenessRetries = 0;
         final State originalState = getState(tunnel);
 
         if (state == State.TOGGLE)
