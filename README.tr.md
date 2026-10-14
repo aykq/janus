@@ -75,3 +75,17 @@ Apache License 2.0, bkz. [COPYING](COPYING).
 [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android) ve
 [wireguard-android](https://git.zx2c4.com/wireguard-android) temel alınmıştır.
 WireGuard, Jason A. Donenfeld'in tescilli ticari markasıdır.
+
+### Üçüncü taraf bileşenler
+
+APK ayrıca şunları içerir:
+
+- [amneziawg-tools](https://github.com/amnezia-vpn/amneziawg-tools/tree/ee0f0a9aa34ff0a0da4b3433b9512781cfe02843),
+  GPL-2.0, bkz. [licenses/GPL-2.0.txt](licenses/GPL-2.0.txt). Ayrı programlar olarak
+  `libwg.so` ve `libwg-quick.so` adıyla gelir. Kaynağı bağlantıdaki commit'tir, bu repoda
+  submodule olarak bulunur.
+- [amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go), MIT, Go `golang.org/x`
+  kütüphaneleriyle (BSD-3-Clause) birlikte `libwg-go.so` içine derlenir.
+
+[termux-elf-cleaner](https://github.com/termux/termux-elf-cleaner) (GPL-3.0) yalnız derleme
+sırasında kullanılır, APK'ya girmez.

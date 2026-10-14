@@ -73,3 +73,17 @@ Apache License 2.0, see [COPYING](COPYING). Based on
 [amneziawg-android](https://github.com/amnezia-vpn/amneziawg-android) and
 [wireguard-android](https://git.zx2c4.com/wireguard-android).
 WireGuard is a registered trademark of Jason A. Donenfeld.
+
+### Third-party components
+
+The APK also contains:
+
+- [amneziawg-tools](https://github.com/amnezia-vpn/amneziawg-tools/tree/ee0f0a9aa34ff0a0da4b3433b9512781cfe02843),
+  GPL-2.0, see [licenses/GPL-2.0.txt](licenses/GPL-2.0.txt). It ships as the separate programs
+  `libwg.so` and `libwg-quick.so`. The source is the linked commit, included in this repository
+  as a submodule.
+- [amneziawg-go](https://github.com/amnezia-vpn/amneziawg-go), MIT, built into `libwg-go.so`
+  together with the Go `golang.org/x` libraries (BSD-3-Clause).
+
+[termux-elf-cleaner](https://github.com/termux/termux-elf-cleaner) (GPL-3.0) is used only during
+the build and is not part of the APK.
